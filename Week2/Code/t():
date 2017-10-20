@@ -1,0 +1,1801 @@
+[0;31mType:[0m        module
+[0;31mString form:[0m <module 'doctest' from '/usr/lib/python2.7/doctest.pyc'>
+[0;31mFile:[0m        /usr/lib/python2.7/doctest.py
+[0;31mSource:[0m     
+[0;31m# Module doctest.[0m[0;34m[0m
+[0;34m[0m[0;31m# Released to the public domain 16-Jan-2001, by Tim Peters (tim@python.org).[0m[0;34m[0m
+[0;34m[0m[0;31m# Major enhancements and refactoring by:[0m[0;34m[0m
+[0;34m[0m[0;31m#     Jim Fulton[0m[0;34m[0m
+[0;34m[0m[0;31m#     Edward Loper[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;31m# Provided as-is; use at your own risk; no warranty; no promises; enjoy![0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;34mr"""Module doctest -- a framework for running examples in docstrings.[0m
+[0;34m[0m
+[0;34mIn simplest use, end each module M to be tested with:[0m
+[0;34m[0m
+[0;34mdef _test():[0m
+[0;34m    import doctest[0m
+[0;34m    doctest.testmod()[0m
+[0;34m[0m
+[0;34mif __name__ == "__main__":[0m
+[0;34m    _test()[0m
+[0;34m[0m
+[0;34mThen running the module as a script will cause the examples in the[0m
+[0;34mdocstrings to get executed and verified:[0m
+[0;34m[0m
+[0;34mpython M.py[0m
+[0;34m[0m
+[0;34mThis won't display anything unless an example fails, in which case the[0m
+[0;34mfailing example(s) and the cause(s) of the failure(s) are printed to stdout[0m
+[0;34m(why not stderr? because stderr is a lame hack <0.2 wink>), and the final[0m
+[0;34mline of output is "Test failed.".[0m
+[0;34m[0m
+[0;34mRun it with the -v switch instead:[0m
+[0;34m[0m
+[0;34mpython M.py -v[0m
+[0;34m[0m
+[0;34mand a detailed report of all examples tried is printed to stdout, along[0m
+[0;34mwith assorted summaries at the end.[0m
+[0;34m[0m
+[0;34mYou can force verbose mode by passing "verbose=True" to testmod, or prohibit[0m
+[0;34mit by passing "verbose=False".  In either of those cases, sys.argv is not[0m
+[0;34mexamined by testmod.[0m
+[0;34m[0m
+[0;34mThere are a variety of other ways to run doctests, including integration[0m
+[0;34mwith the unittest framework, and support for running non-Python text[0m
+[0;34mfiles containing doctests.  There are also many ways to override parts[0m
+[0;34mof doctest's default behaviors.  See the Library Reference Manual for[0m
+[0;34mdetails.[0m
+[0;34m"""[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0m__docformat__[0m [0;34m=[0m [0;34m'reStructuredText en'[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0m__all__[0m [0;34m=[0m [0;34m[[0m[0;34m[0m
+[0;34m[0m    [0;31m# 0, Option Flags[0m[0;34m[0m
+[0;34m[0m    [0;34m'register_optionflag'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'DONT_ACCEPT_TRUE_FOR_1'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'DONT_ACCEPT_BLANKLINE'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'NORMALIZE_WHITESPACE'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'ELLIPSIS'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'SKIP'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'IGNORE_EXCEPTION_DETAIL'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'COMPARISON_FLAGS'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'REPORT_UDIFF'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'REPORT_CDIFF'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'REPORT_NDIFF'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'REPORT_ONLY_FIRST_FAILURE'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'REPORTING_FLAGS'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;31m# 1. Utility Functions[0m[0;34m[0m
+[0;34m[0m    [0;31m# 2. Example & DocTest[0m[0;34m[0m
+[0;34m[0m    [0;34m'Example'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'DocTest'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;31m# 3. Doctest Parser[0m[0;34m[0m
+[0;34m[0m    [0;34m'DocTestParser'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;31m# 4. Doctest Finder[0m[0;34m[0m
+[0;34m[0m    [0;34m'DocTestFinder'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;31m# 5. Doctest Runner[0m[0;34m[0m
+[0;34m[0m    [0;34m'DocTestRunner'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'OutputChecker'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'DocTestFailure'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'UnexpectedException'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'DebugRunner'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;31m# 6. Test Functions[0m[0;34m[0m
+[0;34m[0m    [0;34m'testmod'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'testfile'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'run_docstring_examples'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;31m# 7. Tester[0m[0;34m[0m
+[0;34m[0m    [0;34m'Tester'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;31m# 8. Unittest Support[0m[0;34m[0m
+[0;34m[0m    [0;34m'DocTestSuite'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'DocFileSuite'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'set_unittest_reportflags'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;31m# 9. Debugging Support[0m[0;34m[0m
+[0;34m[0m    [0;34m'script_from_examples'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'testsource'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'debug_src'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m    [0;34m'debug'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m[0;34m][0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mimport[0m [0m__future__[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mimport[0m [0msys[0m[0;34m,[0m [0mtraceback[0m[0;34m,[0m [0minspect[0m[0;34m,[0m [0mlinecache[0m[0;34m,[0m [0mos[0m[0;34m,[0m [0mre[0m[0;34m[0m
+[0;34m[0m[0;32mimport[0m [0munittest[0m[0;34m,[0m [0mdifflib[0m[0;34m,[0m [0mpdb[0m[0;34m,[0m [0mtempfile[0m[0;34m[0m
+[0;34m[0m[0;32mimport[0m [0mwarnings[0m[0;34m[0m
+[0;34m[0m[0;32mfrom[0m [0mStringIO[0m [0;32mimport[0m [0mStringIO[0m[0;34m[0m
+[0;34m[0m[0;32mfrom[0m [0mcollections[0m [0;32mimport[0m [0mnamedtuple[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0mTestResults[0m [0;34m=[0m [0mnamedtuple[0m[0;34m([0m[0;34m'TestResults'[0m[0;34m,[0m [0;34m'failed attempted'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;31m# There are 4 basic classes:[0m[0;34m[0m
+[0;34m[0m[0;31m#  - Example: a <source, want> pair, plus an intra-docstring line number.[0m[0;34m[0m
+[0;34m[0m[0;31m#  - DocTest: a collection of examples, parsed from a docstring, plus[0m[0;34m[0m
+[0;34m[0m[0;31m#    info about where the docstring came from (name, filename, lineno).[0m[0;34m[0m
+[0;34m[0m[0;31m#  - DocTestFinder: extracts DocTests from a given object's docstring and[0m[0;34m[0m
+[0;34m[0m[0;31m#    its contained objects' docstrings.[0m[0;34m[0m
+[0;34m[0m[0;31m#  - DocTestRunner: runs DocTest cases, and accumulates statistics.[0m[0;34m[0m
+[0;34m[0m[0;31m#[0m[0;34m[0m
+[0;34m[0m[0;31m# So the basic picture is:[0m[0;34m[0m
+[0;34m[0m[0;31m#[0m[0;34m[0m
+[0;34m[0m[0;31m#                             list of:[0m[0;34m[0m
+[0;34m[0m[0;31m# +------+                   +---------+                   +-------+[0m[0;34m[0m
+[0;34m[0m[0;31m# |object| --DocTestFinder-> | DocTest | --DocTestRunner-> |results|[0m[0;34m[0m
+[0;34m[0m[0;31m# +------+                   +---------+                   +-------+[0m[0;34m[0m
+[0;34m[0m[0;31m#                            | Example |[0m[0;34m[0m
+[0;34m[0m[0;31m#                            |   ...   |[0m[0;34m[0m
+[0;34m[0m[0;31m#                            | Example |[0m[0;34m[0m
+[0;34m[0m[0;31m#                            +---------+[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;31m# Option constants.[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0mOPTIONFLAGS_BY_NAME[0m [0;34m=[0m [0;34m{[0m[0;34m}[0m[0;34m[0m
+[0;34m[0m[0;32mdef[0m [0mregister_optionflag[0m[0;34m([0m[0mname[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;31m# Create a new flag unless `name` is already known.[0m[0;34m[0m
+[0;34m[0m    [0;32mreturn[0m [0mOPTIONFLAGS_BY_NAME[0m[0;34m.[0m[0msetdefault[0m[0;34m([0m[0mname[0m[0;34m,[0m [0;36m1[0m [0;34m<<[0m [0mlen[0m[0;34m([0m[0mOPTIONFLAGS_BY_NAME[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0mDONT_ACCEPT_TRUE_FOR_1[0m [0;34m=[0m [0mregister_optionflag[0m[0;34m([0m[0;34m'DONT_ACCEPT_TRUE_FOR_1'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0mDONT_ACCEPT_BLANKLINE[0m [0;34m=[0m [0mregister_optionflag[0m[0;34m([0m[0;34m'DONT_ACCEPT_BLANKLINE'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0mNORMALIZE_WHITESPACE[0m [0;34m=[0m [0mregister_optionflag[0m[0;34m([0m[0;34m'NORMALIZE_WHITESPACE'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0mELLIPSIS[0m [0;34m=[0m [0mregister_optionflag[0m[0;34m([0m[0;34m'ELLIPSIS'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0mSKIP[0m [0;34m=[0m [0mregister_optionflag[0m[0;34m([0m[0;34m'SKIP'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0mIGNORE_EXCEPTION_DETAIL[0m [0;34m=[0m [0mregister_optionflag[0m[0;34m([0m[0;34m'IGNORE_EXCEPTION_DETAIL'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0mCOMPARISON_FLAGS[0m [0;34m=[0m [0;34m([0m[0mDONT_ACCEPT_TRUE_FOR_1[0m [0;34m|[0m[0;34m[0m
+[0;34m[0m                    [0mDONT_ACCEPT_BLANKLINE[0m [0;34m|[0m[0;34m[0m
+[0;34m[0m                    [0mNORMALIZE_WHITESPACE[0m [0;34m|[0m[0;34m[0m
+[0;34m[0m                    [0mELLIPSIS[0m [0;34m|[0m[0;34m[0m
+[0;34m[0m                    [0mSKIP[0m [0;34m|[0m[0;34m[0m
+[0;34m[0m                    [0mIGNORE_EXCEPTION_DETAIL[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0mREPORT_UDIFF[0m [0;34m=[0m [0mregister_optionflag[0m[0;34m([0m[0;34m'REPORT_UDIFF'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0mREPORT_CDIFF[0m [0;34m=[0m [0mregister_optionflag[0m[0;34m([0m[0;34m'REPORT_CDIFF'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0mREPORT_NDIFF[0m [0;34m=[0m [0mregister_optionflag[0m[0;34m([0m[0;34m'REPORT_NDIFF'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0mREPORT_ONLY_FIRST_FAILURE[0m [0;34m=[0m [0mregister_optionflag[0m[0;34m([0m[0;34m'REPORT_ONLY_FIRST_FAILURE'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0mREPORTING_FLAGS[0m [0;34m=[0m [0;34m([0m[0mREPORT_UDIFF[0m [0;34m|[0m[0;34m[0m
+[0;34m[0m                   [0mREPORT_CDIFF[0m [0;34m|[0m[0;34m[0m
+[0;34m[0m                   [0mREPORT_NDIFF[0m [0;34m|[0m[0;34m[0m
+[0;34m[0m                   [0mREPORT_ONLY_FIRST_FAILURE[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;31m# Special string markers for use in `want` strings:[0m[0;34m[0m
+[0;34m[0m[0mBLANKLINE_MARKER[0m [0;34m=[0m [0;34m'<BLANKLINE>'[0m[0;34m[0m
+[0;34m[0m[0mELLIPSIS_MARKER[0m [0;34m=[0m [0;34m'...'[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;31m######################################################################[0m[0;34m[0m
+[0;34m[0m[0;31m## Table of Contents[0m[0;34m[0m
+[0;34m[0m[0;31m######################################################################[0m[0;34m[0m
+[0;34m[0m[0;31m#  1. Utility Functions[0m[0;34m[0m
+[0;34m[0m[0;31m#  2. Example & DocTest -- store test cases[0m[0;34m[0m
+[0;34m[0m[0;31m#  3. DocTest Parser -- extracts examples from strings[0m[0;34m[0m
+[0;34m[0m[0;31m#  4. DocTest Finder -- extracts test cases from objects[0m[0;34m[0m
+[0;34m[0m[0;31m#  5. DocTest Runner -- runs test cases[0m[0;34m[0m
+[0;34m[0m[0;31m#  6. Test Functions -- convenient wrappers for testing[0m[0;34m[0m
+[0;34m[0m[0;31m#  7. Tester Class -- for backwards compatibility[0m[0;34m[0m
+[0;34m[0m[0;31m#  8. Unittest Support[0m[0;34m[0m
+[0;34m[0m[0;31m#  9. Debugging Support[0m[0;34m[0m
+[0;34m[0m[0;31m# 10. Example Usage[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;31m######################################################################[0m[0;34m[0m
+[0;34m[0m[0;31m## 1. Utility Functions[0m[0;34m[0m
+[0;34m[0m[0;31m######################################################################[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mdef[0m [0m_extract_future_flags[0m[0;34m([0m[0mglobs[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;34m"""[0m
+[0;34m    Return the compiler-flags associated with the future features that[0m
+[0;34m    have been imported into the given namespace (globs).[0m
+[0;34m    """[0m[0;34m[0m
+[0;34m[0m    [0mflags[0m [0;34m=[0m [0;36m0[0m[0;34m[0m
+[0;34m[0m    [0;32mfor[0m [0mfname[0m [0;32min[0m [0m__future__[0m[0;34m.[0m[0mall_feature_names[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0mfeature[0m [0;34m=[0m [0mglobs[0m[0;34m.[0m[0mget[0m[0;34m([0m[0mfname[0m[0;34m,[0m [0mNone[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mfeature[0m [0;32mis[0m [0mgetattr[0m[0;34m([0m[0m__future__[0m[0;34m,[0m [0mfname[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mflags[0m [0;34m|=[0m [0mfeature[0m[0;34m.[0m[0mcompiler_flag[0m[0;34m[0m
+[0;34m[0m    [0;32mreturn[0m [0mflags[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mdef[0m [0m_normalize_module[0m[0;34m([0m[0mmodule[0m[0;34m,[0m [0mdepth[0m[0;34m=[0m[0;36m2[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;34m"""[0m
+[0;34m    Return the module specified by `module`.  In particular:[0m
+[0;34m      - If `module` is a module, then return module.[0m
+[0;34m      - If `module` is a string, then import and return the[0m
+[0;34m        module with that name.[0m
+[0;34m      - If `module` is None, then return the calling module.[0m
+[0;34m        The calling module is assumed to be the module of[0m
+[0;34m        the stack frame at the given depth in the call stack.[0m
+[0;34m    """[0m[0;34m[0m
+[0;34m[0m    [0;32mif[0m [0minspect[0m[0;34m.[0m[0mismodule[0m[0;34m([0m[0mmodule[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mmodule[0m[0;34m[0m
+[0;34m[0m    [0;32melif[0m [0misinstance[0m[0;34m([0m[0mmodule[0m[0;34m,[0m [0;34m([0m[0mstr[0m[0;34m,[0m [0municode[0m[0;34m)[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0m__import__[0m[0;34m([0m[0mmodule[0m[0;34m,[0m [0mglobals[0m[0;34m([0m[0;34m)[0m[0;34m,[0m [0mlocals[0m[0;34m([0m[0;34m)[0m[0;34m,[0m [0;34m[[0m[0;34m"*"[0m[0;34m][0m[0;34m)[0m[0;34m[0m
+[0;34m[0m    [0;32melif[0m [0mmodule[0m [0;32mis[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0msys[0m[0;34m.[0m[0mmodules[0m[0;34m[[0m[0msys[0m[0;34m.[0m[0m_getframe[0m[0;34m([0m[0mdepth[0m[0;34m)[0m[0;34m.[0m[0mf_globals[0m[0;34m[[0m[0;34m'__name__'[0m[0;34m][0m[0;34m][0m[0;34m[0m
+[0;34m[0m    [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mraise[0m [0mTypeError[0m[0;34m([0m[0;34m"Expected a module, string, or None"[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mdef[0m [0m_load_testfile[0m[0;34m([0m[0mfilename[0m[0;34m,[0m [0mpackage[0m[0;34m,[0m [0mmodule_relative[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;32mif[0m [0mmodule_relative[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0mpackage[0m [0;34m=[0m [0m_normalize_module[0m[0;34m([0m[0mpackage[0m[0;34m,[0m [0;36m3[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0mfilename[0m [0;34m=[0m [0m_module_relative_path[0m[0;34m([0m[0mpackage[0m[0;34m,[0m [0mfilename[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mhasattr[0m[0;34m([0m[0mpackage[0m[0;34m,[0m [0;34m'__loader__'[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mhasattr[0m[0;34m([0m[0mpackage[0m[0;34m.[0m[0m__loader__[0m[0;34m,[0m [0;34m'get_data'[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mfile_contents[0m [0;34m=[0m [0mpackage[0m[0;34m.[0m[0m__loader__[0m[0;34m.[0m[0mget_data[0m[0;34m([0m[0mfilename[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                [0;31m# get_data() opens files as 'rb', so one must do the equivalent[0m[0;34m[0m
+[0;34m[0m                [0;31m# conversion as universal newlines would do.[0m[0;34m[0m
+[0;34m[0m                [0;32mreturn[0m [0mfile_contents[0m[0;34m.[0m[0mreplace[0m[0;34m([0m[0mos[0m[0;34m.[0m[0mlinesep[0m[0;34m,[0m [0;34m'\n'[0m[0;34m)[0m[0;34m,[0m [0mfilename[0m[0;34m[0m
+[0;34m[0m    [0;32mwith[0m [0mopen[0m[0;34m([0m[0mfilename[0m[0;34m)[0m [0;32mas[0m [0mf[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mf[0m[0;34m.[0m[0mread[0m[0;34m([0m[0;34m)[0m[0;34m,[0m [0mfilename[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;31m# Use sys.stdout encoding for ouput.[0m[0;34m[0m
+[0;34m[0m[0m_encoding[0m [0;34m=[0m [0mgetattr[0m[0;34m([0m[0msys[0m[0;34m.[0m[0m__stdout__[0m[0;34m,[0m [0;34m'encoding'[0m[0;34m,[0m [0mNone[0m[0;34m)[0m [0;32mor[0m [0;34m'utf-8'[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mdef[0m [0m_indent[0m[0;34m([0m[0ms[0m[0;34m,[0m [0mindent[0m[0;34m=[0m[0;36m4[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;34m"""[0m
+[0;34m    Add the given number of space characters to the beginning of[0m
+[0;34m    every non-blank line in `s`, and return the result.[0m
+[0;34m    If the string `s` is Unicode, it is encoded using the stdout[0m
+[0;34m    encoding and the `backslashreplace` error handler.[0m
+[0;34m    """[0m[0;34m[0m
+[0;34m[0m    [0;32mif[0m [0misinstance[0m[0;34m([0m[0ms[0m[0;34m,[0m [0municode[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0ms[0m [0;34m=[0m [0ms[0m[0;34m.[0m[0mencode[0m[0;34m([0m[0m_encoding[0m[0;34m,[0m [0;34m'backslashreplace'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m    [0;31m# This regexp matches the start of non-blank lines:[0m[0;34m[0m
+[0;34m[0m    [0;32mreturn[0m [0mre[0m[0;34m.[0m[0msub[0m[0;34m([0m[0;34m'(?m)^(?!$)'[0m[0;34m,[0m [0mindent[0m[0;34m*[0m[0;34m' '[0m[0;34m,[0m [0ms[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mdef[0m [0m_exception_traceback[0m[0;34m([0m[0mexc_info[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;34m"""[0m
+[0;34m    Return a string containing a traceback message for the given[0m
+[0;34m    exc_info tuple (as returned by sys.exc_info()).[0m
+[0;34m    """[0m[0;34m[0m
+[0;34m[0m    [0;31m# Get a traceback message.[0m[0;34m[0m
+[0;34m[0m    [0mexcout[0m [0;34m=[0m [0mStringIO[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m    [0mexc_type[0m[0;34m,[0m [0mexc_val[0m[0;34m,[0m [0mexc_tb[0m [0;34m=[0m [0mexc_info[0m[0;34m[0m
+[0;34m[0m    [0mtraceback[0m[0;34m.[0m[0mprint_exception[0m[0;34m([0m[0mexc_type[0m[0;34m,[0m [0mexc_val[0m[0;34m,[0m [0mexc_tb[0m[0;34m,[0m [0mfile[0m[0;34m=[0m[0mexcout[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m    [0;32mreturn[0m [0mexcout[0m[0;34m.[0m[0mgetvalue[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;31m# Override some StringIO methods.[0m[0;34m[0m
+[0;34m[0m[0;32mclass[0m [0m_SpoofOut[0m[0;34m([0m[0mStringIO[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0mgetvalue[0m[0;34m([0m[0mself[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0mresult[0m [0;34m=[0m [0mStringIO[0m[0;34m.[0m[0mgetvalue[0m[0;34m([0m[0mself[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;31m# If anything at all was written, make sure there's a trailing[0m[0;34m[0m
+[0;34m[0m        [0;31m# newline.  There's no way for the expected output to indicate[0m[0;34m[0m
+[0;34m[0m        [0;31m# that a trailing newline is missing.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mresult[0m [0;32mand[0m [0;32mnot[0m [0mresult[0m[0;34m.[0m[0mendswith[0m[0;34m([0m[0;34m"\n"[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mresult[0m [0;34m+=[0m [0;34m"\n"[0m[0;34m[0m
+[0;34m[0m        [0;31m# Prevent softspace from screwing up the next test case, in[0m[0;34m[0m
+[0;34m[0m        [0;31m# case they used print with a trailing comma in an example.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mhasattr[0m[0;34m([0m[0mself[0m[0;34m,[0m [0;34m"softspace"[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mdel[0m [0mself[0m[0;34m.[0m[0msoftspace[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mresult[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0mtruncate[0m[0;34m([0m[0mself[0m[0;34m,[0m   [0msize[0m[0;34m=[0m[0mNone[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0mStringIO[0m[0;34m.[0m[0mtruncate[0m[0;34m([0m[0mself[0m[0;34m,[0m [0msize[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mhasattr[0m[0;34m([0m[0mself[0m[0;34m,[0m [0;34m"softspace"[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mdel[0m [0mself[0m[0;34m.[0m[0msoftspace[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0;32mnot[0m [0mself[0m[0;34m.[0m[0mbuf[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;31m# Reset it to an empty string, to make sure it's not unicode.[0m[0;34m[0m
+[0;34m[0m            [0mself[0m[0;34m.[0m[0mbuf[0m [0;34m=[0m [0;34m''[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;31m# Worst-case linear-time ellipsis matching.[0m[0;34m[0m
+[0;34m[0m[0;32mdef[0m [0m_ellipsis_match[0m[0;34m([0m[0mwant[0m[0;34m,[0m [0mgot[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;34m"""[0m
+[0;34m    Essentially the only subtle case:[0m
+[0;34m    >>> _ellipsis_match('aa...aa', 'aaa')[0m
+[0;34m    False[0m
+[0;34m    """[0m[0;34m[0m
+[0;34m[0m    [0;32mif[0m [0mELLIPSIS_MARKER[0m [0;32mnot[0m [0;32min[0m [0mwant[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mwant[0m [0;34m==[0m [0mgot[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;31m# Find "the real" strings.[0m[0;34m[0m
+[0;34m[0m    [0mws[0m [0;34m=[0m [0mwant[0m[0;34m.[0m[0msplit[0m[0;34m([0m[0mELLIPSIS_MARKER[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m    [0;32massert[0m [0mlen[0m[0;34m([0m[0mws[0m[0;34m)[0m [0;34m>=[0m [0;36m2[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;31m# Deal with exact matches possibly needed at one or both ends.[0m[0;34m[0m
+[0;34m[0m    [0mstartpos[0m[0;34m,[0m [0mendpos[0m [0;34m=[0m [0;36m0[0m[0;34m,[0m [0mlen[0m[0;34m([0m[0mgot[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m    [0mw[0m [0;34m=[0m [0mws[0m[0;34m[[0m[0;36m0[0m[0;34m][0m[0;34m[0m
+[0;34m[0m    [0;32mif[0m [0mw[0m[0;34m:[0m   [0;31m# starts with exact match[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mgot[0m[0;34m.[0m[0mstartswith[0m[0;34m([0m[0mw[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mstartpos[0m [0;34m=[0m [0mlen[0m[0;34m([0m[0mw[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32mdel[0m [0mws[0m[0;34m[[0m[0;36m0[0m[0;34m][0m[0;34m[0m
+[0;34m[0m        [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mFalse[0m[0;34m[0m
+[0;34m[0m    [0mw[0m [0;34m=[0m [0mws[0m[0;34m[[0m[0;34m-[0m[0;36m1[0m[0;34m][0m[0;34m[0m
+[0;34m[0m    [0;32mif[0m [0mw[0m[0;34m:[0m   [0;31m# ends with exact match[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mgot[0m[0;34m.[0m[0mendswith[0m[0;34m([0m[0mw[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mendpos[0m [0;34m-=[0m [0mlen[0m[0;34m([0m[0mw[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32mdel[0m [0mws[0m[0;34m[[0m[0;34m-[0m[0;36m1[0m[0;34m][0m[0;34m[0m
+[0;34m[0m        [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mFalse[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mif[0m [0mstartpos[0m [0;34m>[0m [0mendpos[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;31m# Exact end matches required more characters than we have, as in[0m[0;34m[0m
+[0;34m[0m        [0;31m# _ellipsis_match('aa...aa', 'aaa')[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mFalse[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;31m# For the rest, we only need to find the leftmost non-overlapping[0m[0;34m[0m
+[0;34m[0m    [0;31m# match for each piece.  If there's no overall match that way alone,[0m[0;34m[0m
+[0;34m[0m    [0;31m# there's no overall match period.[0m[0;34m[0m
+[0;34m[0m    [0;32mfor[0m [0mw[0m [0;32min[0m [0mws[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;31m# w may be '' at times, if there are consecutive ellipses, or[0m[0;34m[0m
+[0;34m[0m        [0;31m# due to an ellipsis at the start or end of `want`.  That's OK.[0m[0;34m[0m
+[0;34m[0m        [0;31m# Search for an empty string succeeds, and doesn't change startpos.[0m[0;34m[0m
+[0;34m[0m        [0mstartpos[0m [0;34m=[0m [0mgot[0m[0;34m.[0m[0mfind[0m[0;34m([0m[0mw[0m[0;34m,[0m [0mstartpos[0m[0;34m,[0m [0mendpos[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mstartpos[0m [0;34m<[0m [0;36m0[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mFalse[0m[0;34m[0m
+[0;34m[0m        [0mstartpos[0m [0;34m+=[0m [0mlen[0m[0;34m([0m[0mw[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mreturn[0m [0mTrue[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mdef[0m [0m_comment_line[0m[0;34m([0m[0mline[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;34m"Return a commented form of the given line"[0m[0;34m[0m
+[0;34m[0m    [0mline[0m [0;34m=[0m [0mline[0m[0;34m.[0m[0mrstrip[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m    [0;32mif[0m [0mline[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0;34m'# '[0m[0;34m+[0m[0mline[0m[0;34m[0m
+[0;34m[0m    [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0;34m'#'[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mdef[0m [0m_strip_exception_details[0m[0;34m([0m[0mmsg[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;31m# Support for IGNORE_EXCEPTION_DETAIL.[0m[0;34m[0m
+[0;34m[0m    [0;31m# Get rid of everything except the exception name; in particular, drop[0m[0;34m[0m
+[0;34m[0m    [0;31m# the possibly dotted module path (if any) and the exception message (if[0m[0;34m[0m
+[0;34m[0m    [0;31m# any).  We assume that a colon is never part of a dotted name, or of an[0m[0;34m[0m
+[0;34m[0m    [0;31m# exception name.[0m[0;34m[0m
+[0;34m[0m    [0;31m# E.g., given[0m[0;34m[0m
+[0;34m[0m    [0;31m#    "foo.bar.MyError: la di da"[0m[0;34m[0m
+[0;34m[0m    [0;31m# return "MyError"[0m[0;34m[0m
+[0;34m[0m    [0;31m# Or for "abc.def" or "abc.def:\n" return "def".[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0mstart[0m[0;34m,[0m [0mend[0m [0;34m=[0m [0;36m0[0m[0;34m,[0m [0mlen[0m[0;34m([0m[0mmsg[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m    [0;31m# The exception name must appear on the first line.[0m[0;34m[0m
+[0;34m[0m    [0mi[0m [0;34m=[0m [0mmsg[0m[0;34m.[0m[0mfind[0m[0;34m([0m[0;34m"\n"[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m    [0;32mif[0m [0mi[0m [0;34m>=[0m [0;36m0[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0mend[0m [0;34m=[0m [0mi[0m[0;34m[0m
+[0;34m[0m    [0;31m# retain up to the first colon (if any)[0m[0;34m[0m
+[0;34m[0m    [0mi[0m [0;34m=[0m [0mmsg[0m[0;34m.[0m[0mfind[0m[0;34m([0m[0;34m':'[0m[0;34m,[0m [0;36m0[0m[0;34m,[0m [0mend[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m    [0;32mif[0m [0mi[0m [0;34m>=[0m [0;36m0[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0mend[0m [0;34m=[0m [0mi[0m[0;34m[0m
+[0;34m[0m    [0;31m# retain just the exception name[0m[0;34m[0m
+[0;34m[0m    [0mi[0m [0;34m=[0m [0mmsg[0m[0;34m.[0m[0mrfind[0m[0;34m([0m[0;34m'.'[0m[0;34m,[0m [0;36m0[0m[0;34m,[0m [0mend[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m    [0;32mif[0m [0mi[0m [0;34m>=[0m [0;36m0[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0mstart[0m [0;34m=[0m [0mi[0m[0;34m+[0m[0;36m1[0m[0;34m[0m
+[0;34m[0m    [0;32mreturn[0m [0mmsg[0m[0;34m[[0m[0mstart[0m[0;34m:[0m [0mend[0m[0;34m][0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mclass[0m [0m_OutputRedirectingPdb[0m[0;34m([0m[0mpdb[0m[0;34m.[0m[0mPdb[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;34m"""[0m
+[0;34m    A specialized version of the python debugger that redirects stdout[0m
+[0;34m    to a given stream when interacting with the user.  Stdout is *not*[0m
+[0;34m    redirected when traced code is executed.[0m
+[0;34m    """[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__init__[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mout[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0m__out[0m [0;34m=[0m [0mout[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0m__debugger_used[0m [0;34m=[0m [0mFalse[0m[0;34m[0m
+[0;34m[0m        [0mpdb[0m[0;34m.[0m[0mPdb[0m[0;34m.[0m[0m__init__[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mstdout[0m[0;34m=[0m[0mout[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;31m# still use input() to get user input[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0muse_rawinput[0m [0;34m=[0m [0;36m1[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0mset_trace[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mframe[0m[0;34m=[0m[0mNone[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0m__debugger_used[0m [0;34m=[0m [0mTrue[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mframe[0m [0;32mis[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mframe[0m [0;34m=[0m [0msys[0m[0;34m.[0m[0m_getframe[0m[0;34m([0m[0;34m)[0m[0;34m.[0m[0mf_back[0m[0;34m[0m
+[0;34m[0m        [0mpdb[0m[0;34m.[0m[0mPdb[0m[0;34m.[0m[0mset_trace[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mframe[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0mset_continue[0m[0;34m([0m[0mself[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;31m# Calling set_continue unconditionally would break unit test[0m[0;34m[0m
+[0;34m[0m        [0;31m# coverage reporting, as Bdb.set_continue calls sys.settrace(None).[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mself[0m[0;34m.[0m[0m__debugger_used[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mpdb[0m[0;34m.[0m[0mPdb[0m[0;34m.[0m[0mset_continue[0m[0;34m([0m[0mself[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0mtrace_dispatch[0m[0;34m([0m[0mself[0m[0;34m,[0m [0;34m*[0m[0margs[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;31m# Redirect stdout to the given stream.[0m[0;34m[0m
+[0;34m[0m        [0msave_stdout[0m [0;34m=[0m [0msys[0m[0;34m.[0m[0mstdout[0m[0;34m[0m
+[0;34m[0m        [0msys[0m[0;34m.[0m[0mstdout[0m [0;34m=[0m [0mself[0m[0;34m.[0m[0m__out[0m[0;34m[0m
+[0;34m[0m        [0;31m# Call Pdb's trace dispatch method.[0m[0;34m[0m
+[0;34m[0m        [0;32mtry[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mpdb[0m[0;34m.[0m[0mPdb[0m[0;34m.[0m[0mtrace_dispatch[0m[0;34m([0m[0mself[0m[0;34m,[0m [0;34m*[0m[0margs[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mfinally[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0msys[0m[0;34m.[0m[0mstdout[0m [0;34m=[0m [0msave_stdout[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;31m# [XX] Normalize with respect to os.path.pardir?[0m[0;34m[0m
+[0;34m[0m[0;32mdef[0m [0m_module_relative_path[0m[0;34m([0m[0mmodule[0m[0;34m,[0m [0mpath[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;32mif[0m [0;32mnot[0m [0minspect[0m[0;34m.[0m[0mismodule[0m[0;34m([0m[0mmodule[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mraise[0m [0mTypeError[0m[0;34m,[0m [0;34m'Expected a module: %r'[0m [0;34m%[0m [0mmodule[0m[0;34m[0m
+[0;34m[0m    [0;32mif[0m [0mpath[0m[0;34m.[0m[0mstartswith[0m[0;34m([0m[0;34m'/'[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mraise[0m [0mValueError[0m[0;34m,[0m [0;34m'Module-relative files may not have absolute paths'[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;31m# Find the base directory for the path.[0m[0;34m[0m
+[0;34m[0m    [0;32mif[0m [0mhasattr[0m[0;34m([0m[0mmodule[0m[0;34m,[0m [0;34m'__file__'[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;31m# A normal module/package[0m[0;34m[0m
+[0;34m[0m        [0mbasedir[0m [0;34m=[0m [0mos[0m[0;34m.[0m[0mpath[0m[0;34m.[0m[0msplit[0m[0;34m([0m[0mmodule[0m[0;34m.[0m[0m__file__[0m[0;34m)[0m[0;34m[[0m[0;36m0[0m[0;34m][0m[0;34m[0m
+[0;34m[0m    [0;32melif[0m [0mmodule[0m[0;34m.[0m[0m__name__[0m [0;34m==[0m [0;34m'__main__'[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;31m# An interactive session.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mlen[0m[0;34m([0m[0msys[0m[0;34m.[0m[0margv[0m[0;34m)[0m[0;34m>[0m[0;36m0[0m [0;32mand[0m [0msys[0m[0;34m.[0m[0margv[0m[0;34m[[0m[0;36m0[0m[0;34m][0m [0;34m!=[0m [0;34m''[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mbasedir[0m [0;34m=[0m [0mos[0m[0;34m.[0m[0mpath[0m[0;34m.[0m[0msplit[0m[0;34m([0m[0msys[0m[0;34m.[0m[0margv[0m[0;34m[[0m[0;36m0[0m[0;34m][0m[0;34m)[0m[0;34m[[0m[0;36m0[0m[0;34m][0m[0;34m[0m
+[0;34m[0m        [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mbasedir[0m [0;34m=[0m [0mos[0m[0;34m.[0m[0mcurdir[0m[0;34m[0m
+[0;34m[0m    [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;31m# A module w/o __file__ (this includes builtins)[0m[0;34m[0m
+[0;34m[0m        [0;32mraise[0m [0mValueError[0m[0;34m([0m[0;34m"Can't resolve paths relative to the module "[0m [0;34m+[0m[0;34m[0m
+[0;34m[0m                         [0mmodule[0m [0;34m+[0m [0;34m" (it has no __file__)"[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;31m# Combine the base directory and the path.[0m[0;34m[0m
+[0;34m[0m    [0;32mreturn[0m [0mos[0m[0;34m.[0m[0mpath[0m[0;34m.[0m[0mjoin[0m[0;34m([0m[0mbasedir[0m[0;34m,[0m [0;34m*[0m[0;34m([0m[0mpath[0m[0;34m.[0m[0msplit[0m[0;34m([0m[0;34m'/'[0m[0;34m)[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;31m######################################################################[0m[0;34m[0m
+[0;34m[0m[0;31m## 2. Example & DocTest[0m[0;34m[0m
+[0;34m[0m[0;31m######################################################################[0m[0;34m[0m
+[0;34m[0m[0;31m## - An "example" is a <source, want> pair, where "source" is a[0m[0;34m[0m
+[0;34m[0m[0;31m##   fragment of source code, and "want" is the expected output for[0m[0;34m[0m
+[0;34m[0m[0;31m##   "source."  The Example class also includes information about[0m[0;34m[0m
+[0;34m[0m[0;31m##   where the example was extracted from.[0m[0;34m[0m
+[0;34m[0m[0;31m##[0m[0;34m[0m
+[0;34m[0m[0;31m## - A "doctest" is a collection of examples, typically extracted from[0m[0;34m[0m
+[0;34m[0m[0;31m##   a string (such as an object's docstring).  The DocTest class also[0m[0;34m[0m
+[0;34m[0m[0;31m##   includes information about where the string was extracted from.[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mclass[0m [0mExample[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;34m"""[0m
+[0;34m    A single doctest example, consisting of source code and expected[0m
+[0;34m    output.  `Example` defines the following attributes:[0m
+[0;34m[0m
+[0;34m      - source: A single Python statement, always ending with a newline.[0m
+[0;34m        The constructor adds a newline if needed.[0m
+[0;34m[0m
+[0;34m      - want: The expected output from running the source code (either[0m
+[0;34m        from stdout, or a traceback in case of exception).  `want` ends[0m
+[0;34m        with a newline unless it's empty, in which case it's an empty[0m
+[0;34m        string.  The constructor adds a newline if needed.[0m
+[0;34m[0m
+[0;34m      - exc_msg: The exception message generated by the example, if[0m
+[0;34m        the example is expected to generate an exception; or `None` if[0m
+[0;34m        it is not expected to generate an exception.  This exception[0m
+[0;34m        message is compared against the return value of[0m
+[0;34m        `traceback.format_exception_only()`.  `exc_msg` ends with a[0m
+[0;34m        newline unless it's `None`.  The constructor adds a newline[0m
+[0;34m        if needed.[0m
+[0;34m[0m
+[0;34m      - lineno: The line number within the DocTest string containing[0m
+[0;34m        this Example where the Example begins.  This line number is[0m
+[0;34m        zero-based, with respect to the beginning of the DocTest.[0m
+[0;34m[0m
+[0;34m      - indent: The example's indentation in the DocTest string.[0m
+[0;34m        I.e., the number of space characters that precede the[0m
+[0;34m        example's first prompt.[0m
+[0;34m[0m
+[0;34m      - options: A dictionary mapping from option flags to True or[0m
+[0;34m        False, which is used to override default options for this[0m
+[0;34m        example.  Any option flags not contained in this dictionary[0m
+[0;34m        are left at their default value (as specified by the[0m
+[0;34m        DocTestRunner's optionflags).  By default, no options are set.[0m
+[0;34m    """[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__init__[0m[0;34m([0m[0mself[0m[0;34m,[0m [0msource[0m[0;34m,[0m [0mwant[0m[0;34m,[0m [0mexc_msg[0m[0;34m=[0m[0mNone[0m[0;34m,[0m [0mlineno[0m[0;34m=[0m[0;36m0[0m[0;34m,[0m [0mindent[0m[0;34m=[0m[0;36m0[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                 [0moptions[0m[0;34m=[0m[0mNone[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;31m# Normalize inputs.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0;32mnot[0m [0msource[0m[0;34m.[0m[0mendswith[0m[0;34m([0m[0;34m'\n'[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0msource[0m [0;34m+=[0m [0;34m'\n'[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mwant[0m [0;32mand[0m [0;32mnot[0m [0mwant[0m[0;34m.[0m[0mendswith[0m[0;34m([0m[0;34m'\n'[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mwant[0m [0;34m+=[0m [0;34m'\n'[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mexc_msg[0m [0;32mis[0m [0;32mnot[0m [0mNone[0m [0;32mand[0m [0;32mnot[0m [0mexc_msg[0m[0;34m.[0m[0mendswith[0m[0;34m([0m[0;34m'\n'[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mexc_msg[0m [0;34m+=[0m [0;34m'\n'[0m[0;34m[0m
+[0;34m[0m        [0;31m# Store properties.[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0msource[0m [0;34m=[0m [0msource[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mwant[0m [0;34m=[0m [0mwant[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mlineno[0m [0;34m=[0m [0mlineno[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mindent[0m [0;34m=[0m [0mindent[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0moptions[0m [0;32mis[0m [0mNone[0m[0;34m:[0m [0moptions[0m [0;34m=[0m [0;34m{[0m[0;34m}[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0moptions[0m [0;34m=[0m [0moptions[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mexc_msg[0m [0;34m=[0m [0mexc_msg[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__eq__[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mother[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mtype[0m[0;34m([0m[0mself[0m[0;34m)[0m [0;32mis[0m [0;32mnot[0m [0mtype[0m[0;34m([0m[0mother[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mNotImplemented[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mself[0m[0;34m.[0m[0msource[0m [0;34m==[0m [0mother[0m[0;34m.[0m[0msource[0m [0;32mand[0m \
+               [0mself[0m[0;34m.[0m[0mwant[0m [0;34m==[0m [0mother[0m[0;34m.[0m[0mwant[0m [0;32mand[0m \
+               [0mself[0m[0;34m.[0m[0mlineno[0m [0;34m==[0m [0mother[0m[0;34m.[0m[0mlineno[0m [0;32mand[0m \
+               [0mself[0m[0;34m.[0m[0mindent[0m [0;34m==[0m [0mother[0m[0;34m.[0m[0mindent[0m [0;32mand[0m \
+               [0mself[0m[0;34m.[0m[0moptions[0m [0;34m==[0m [0mother[0m[0;34m.[0m[0moptions[0m [0;32mand[0m \
+               [0mself[0m[0;34m.[0m[0mexc_msg[0m [0;34m==[0m [0mother[0m[0;34m.[0m[0mexc_msg[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__ne__[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mother[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0;32mnot[0m [0mself[0m [0;34m==[0m [0mother[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__hash__[0m[0;34m([0m[0mself[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mhash[0m[0;34m([0m[0;34m([0m[0mself[0m[0;34m.[0m[0msource[0m[0;34m,[0m [0mself[0m[0;34m.[0m[0mwant[0m[0;34m,[0m [0mself[0m[0;34m.[0m[0mlineno[0m[0;34m,[0m [0mself[0m[0;34m.[0m[0mindent[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                     [0mself[0m[0;34m.[0m[0mexc_msg[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mclass[0m [0mDocTest[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;34m"""[0m
+[0;34m    A collection of doctest examples that should be run in a single[0m
+[0;34m    namespace.  Each `DocTest` defines the following attributes:[0m
+[0;34m[0m
+[0;34m      - examples: the list of examples.[0m
+[0;34m[0m
+[0;34m      - globs: The namespace (aka globals) that the examples should[0m
+[0;34m        be run in.[0m
+[0;34m[0m
+[0;34m      - name: A name identifying the DocTest (typically, the name of[0m
+[0;34m        the object whose docstring this DocTest was extracted from).[0m
+[0;34m[0m
+[0;34m      - filename: The name of the file that this DocTest was extracted[0m
+[0;34m        from, or `None` if the filename is unknown.[0m
+[0;34m[0m
+[0;34m      - lineno: The line number within filename where this DocTest[0m
+[0;34m        begins, or `None` if the line number is unavailable.  This[0m
+[0;34m        line number is zero-based, with respect to the beginning of[0m
+[0;34m        the file.[0m
+[0;34m[0m
+[0;34m      - docstring: The string that the examples were extracted from,[0m
+[0;34m        or `None` if the string is unavailable.[0m
+[0;34m    """[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__init__[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mexamples[0m[0;34m,[0m [0mglobs[0m[0;34m,[0m [0mname[0m[0;34m,[0m [0mfilename[0m[0;34m,[0m [0mlineno[0m[0;34m,[0m [0mdocstring[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Create a new DocTest containing the given examples.  The[0m
+[0;34m        DocTest's globals are initialized with a copy of `globs`.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0;32massert[0m [0;32mnot[0m [0misinstance[0m[0;34m([0m[0mexamples[0m[0;34m,[0m [0mbasestring[0m[0;34m)[0m[0;34m,[0m \
+               [0;34m"DocTest no longer accepts str; use DocTestParser instead"[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mexamples[0m [0;34m=[0m [0mexamples[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mdocstring[0m [0;34m=[0m [0mdocstring[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mglobs[0m [0;34m=[0m [0mglobs[0m[0;34m.[0m[0mcopy[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mname[0m [0;34m=[0m [0mname[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mfilename[0m [0;34m=[0m [0mfilename[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mlineno[0m [0;34m=[0m [0mlineno[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__repr__[0m[0;34m([0m[0mself[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mlen[0m[0;34m([0m[0mself[0m[0;34m.[0m[0mexamples[0m[0;34m)[0m [0;34m==[0m [0;36m0[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mexamples[0m [0;34m=[0m [0;34m'no examples'[0m[0;34m[0m
+[0;34m[0m        [0;32melif[0m [0mlen[0m[0;34m([0m[0mself[0m[0;34m.[0m[0mexamples[0m[0;34m)[0m [0;34m==[0m [0;36m1[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mexamples[0m [0;34m=[0m [0;34m'1 example'[0m[0;34m[0m
+[0;34m[0m        [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mexamples[0m [0;34m=[0m [0;34m'%d examples'[0m [0;34m%[0m [0mlen[0m[0;34m([0m[0mself[0m[0;34m.[0m[0mexamples[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0;34m([0m[0;34m'<DocTest %s from %s:%s (%s)>'[0m [0;34m%[0m[0;34m[0m
+[0;34m[0m                [0;34m([0m[0mself[0m[0;34m.[0m[0mname[0m[0;34m,[0m [0mself[0m[0;34m.[0m[0mfilename[0m[0;34m,[0m [0mself[0m[0;34m.[0m[0mlineno[0m[0;34m,[0m [0mexamples[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__eq__[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mother[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mtype[0m[0;34m([0m[0mself[0m[0;34m)[0m [0;32mis[0m [0;32mnot[0m [0mtype[0m[0;34m([0m[0mother[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mNotImplemented[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mself[0m[0;34m.[0m[0mexamples[0m [0;34m==[0m [0mother[0m[0;34m.[0m[0mexamples[0m [0;32mand[0m \
+               [0mself[0m[0;34m.[0m[0mdocstring[0m [0;34m==[0m [0mother[0m[0;34m.[0m[0mdocstring[0m [0;32mand[0m \
+               [0mself[0m[0;34m.[0m[0mglobs[0m [0;34m==[0m [0mother[0m[0;34m.[0m[0mglobs[0m [0;32mand[0m \
+               [0mself[0m[0;34m.[0m[0mname[0m [0;34m==[0m [0mother[0m[0;34m.[0m[0mname[0m [0;32mand[0m \
+               [0mself[0m[0;34m.[0m[0mfilename[0m [0;34m==[0m [0mother[0m[0;34m.[0m[0mfilename[0m [0;32mand[0m \
+               [0mself[0m[0;34m.[0m[0mlineno[0m [0;34m==[0m [0mother[0m[0;34m.[0m[0mlineno[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__ne__[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mother[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0;32mnot[0m [0mself[0m [0;34m==[0m [0mother[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__hash__[0m[0;34m([0m[0mself[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mhash[0m[0;34m([0m[0;34m([0m[0mself[0m[0;34m.[0m[0mdocstring[0m[0;34m,[0m [0mself[0m[0;34m.[0m[0mname[0m[0;34m,[0m [0mself[0m[0;34m.[0m[0mfilename[0m[0;34m,[0m [0mself[0m[0;34m.[0m[0mlineno[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;31m# This lets us sort tests by name:[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__cmp__[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mother[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0;32mnot[0m [0misinstance[0m[0;34m([0m[0mother[0m[0;34m,[0m [0mDocTest[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0;34m-[0m[0;36m1[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mcmp[0m[0;34m([0m[0;34m([0m[0mself[0m[0;34m.[0m[0mname[0m[0;34m,[0m [0mself[0m[0;34m.[0m[0mfilename[0m[0;34m,[0m [0mself[0m[0;34m.[0m[0mlineno[0m[0;34m,[0m [0mid[0m[0;34m([0m[0mself[0m[0;34m)[0m[0;34m)[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                   [0;34m([0m[0mother[0m[0;34m.[0m[0mname[0m[0;34m,[0m [0mother[0m[0;34m.[0m[0mfilename[0m[0;34m,[0m [0mother[0m[0;34m.[0m[0mlineno[0m[0;34m,[0m [0mid[0m[0;34m([0m[0mother[0m[0;34m)[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;31m######################################################################[0m[0;34m[0m
+[0;34m[0m[0;31m## 3. DocTestParser[0m[0;34m[0m
+[0;34m[0m[0;31m######################################################################[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mclass[0m [0mDocTestParser[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;34m"""[0m
+[0;34m    A class used to parse strings containing doctest examples.[0m
+[0;34m    """[0m[0;34m[0m
+[0;34m[0m    [0;31m# This regular expression is used to find doctest examples in a[0m[0;34m[0m
+[0;34m[0m    [0;31m# string.  It defines three groups: `source` is the source code[0m[0;34m[0m
+[0;34m[0m    [0;31m# (including leading indentation and prompts); `indent` is the[0m[0;34m[0m
+[0;34m[0m    [0;31m# indentation of the first (PS1) line of the source code; and[0m[0;34m[0m
+[0;34m[0m    [0;31m# `want` is the expected output (including leading indentation).[0m[0;34m[0m
+[0;34m[0m    [0m_EXAMPLE_RE[0m [0;34m=[0m [0mre[0m[0;34m.[0m[0mcompile[0m[0;34m([0m[0;34mr'''[0m
+[0;34m        # Source consists of a PS1 line followed by zero or more PS2 lines.[0m
+[0;34m        (?P<source>[0m
+[0;34m            (?:^(?P<indent> [ ]*) >>>    .*)    # PS1 line[0m
+[0;34m            (?:\n           [ ]*  \.\.\. .*)*)  # PS2 lines[0m
+[0;34m        \n?[0m
+[0;34m        # Want consists of any non-blank lines that do not start with PS1.[0m
+[0;34m        (?P<want> (?:(?![ ]*$)    # Not a blank line[0m
+[0;34m                     (?![ ]*>>>)  # Not a line starting with PS1[0m
+[0;34m                     .+$\n?       # But any other line[0m
+[0;34m                  )*)[0m
+[0;34m        '''[0m[0;34m,[0m [0mre[0m[0;34m.[0m[0mMULTILINE[0m [0;34m|[0m [0mre[0m[0;34m.[0m[0mVERBOSE[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;31m# A regular expression for handling `want` strings that contain[0m[0;34m[0m
+[0;34m[0m    [0;31m# expected exceptions.  It divides `want` into three pieces:[0m[0;34m[0m
+[0;34m[0m    [0;31m#    - the traceback header line (`hdr`)[0m[0;34m[0m
+[0;34m[0m    [0;31m#    - the traceback stack (`stack`)[0m[0;34m[0m
+[0;34m[0m    [0;31m#    - the exception message (`msg`), as generated by[0m[0;34m[0m
+[0;34m[0m    [0;31m#      traceback.format_exception_only()[0m[0;34m[0m
+[0;34m[0m    [0;31m# `msg` may have multiple lines.  We assume/require that the[0m[0;34m[0m
+[0;34m[0m    [0;31m# exception message is the first non-indented line starting with a word[0m[0;34m[0m
+[0;34m[0m    [0;31m# character following the traceback header line.[0m[0;34m[0m
+[0;34m[0m    [0m_EXCEPTION_RE[0m [0;34m=[0m [0mre[0m[0;34m.[0m[0mcompile[0m[0;34m([0m[0;34mr"""[0m
+[0;34m        # Grab the traceback header.  Different versions of Python have[0m
+[0;34m        # said different things on the first traceback line.[0m
+[0;34m        ^(?P<hdr> Traceback\ \([0m
+[0;34m            (?: most\ recent\ call\ last[0m
+[0;34m            |   innermost\ last[0m
+[0;34m            ) \) :[0m
+[0;34m        )[0m
+[0;34m        \s* $                # toss trailing whitespace on the header.[0m
+[0;34m        (?P<stack> .*?)      # don't blink: absorb stuff until...[0m
+[0;34m        ^ (?P<msg> \w+ .*)   #     a line *starts* with alphanum.[0m
+[0;34m        """[0m[0;34m,[0m [0mre[0m[0;34m.[0m[0mVERBOSE[0m [0;34m|[0m [0mre[0m[0;34m.[0m[0mMULTILINE[0m [0;34m|[0m [0mre[0m[0;34m.[0m[0mDOTALL[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;31m# A callable returning a true value iff its argument is a blank line[0m[0;34m[0m
+[0;34m[0m    [0;31m# or contains a single comment.[0m[0;34m[0m
+[0;34m[0m    [0m_IS_BLANK_OR_COMMENT[0m [0;34m=[0m [0mre[0m[0;34m.[0m[0mcompile[0m[0;34m([0m[0;34mr'^[ ]*(#.*)?$'[0m[0;34m)[0m[0;34m.[0m[0mmatch[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0mparse[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mstring[0m[0;34m,[0m [0mname[0m[0;34m=[0m[0;34m'<string>'[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Divide the given string into examples and intervening text,[0m
+[0;34m        and return them as a list of alternating Examples and strings.[0m
+[0;34m        Line numbers for the Examples are 0-based.  The optional[0m
+[0;34m        argument `name` is a name identifying this string, and is only[0m
+[0;34m        used for error messages.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0mstring[0m [0;34m=[0m [0mstring[0m[0;34m.[0m[0mexpandtabs[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;31m# If all lines begin with the same indentation, then strip it.[0m[0;34m[0m
+[0;34m[0m        [0mmin_indent[0m [0;34m=[0m [0mself[0m[0;34m.[0m[0m_min_indent[0m[0;34m([0m[0mstring[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mmin_indent[0m [0;34m>[0m [0;36m0[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mstring[0m [0;34m=[0m [0;34m'\n'[0m[0;34m.[0m[0mjoin[0m[0;34m([0m[0;34m[[0m[0ml[0m[0;34m[[0m[0mmin_indent[0m[0;34m:[0m[0;34m][0m [0;32mfor[0m [0ml[0m [0;32min[0m [0mstring[0m[0;34m.[0m[0msplit[0m[0;34m([0m[0;34m'\n'[0m[0;34m)[0m[0;34m][0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0moutput[0m [0;34m=[0m [0;34m[[0m[0;34m][0m[0;34m[0m
+[0;34m[0m        [0mcharno[0m[0;34m,[0m [0mlineno[0m [0;34m=[0m [0;36m0[0m[0;34m,[0m [0;36m0[0m[0;34m[0m
+[0;34m[0m        [0;31m# Find all doctest examples in the string:[0m[0;34m[0m
+[0;34m[0m        [0;32mfor[0m [0mm[0m [0;32min[0m [0mself[0m[0;34m.[0m[0m_EXAMPLE_RE[0m[0;34m.[0m[0mfinditer[0m[0;34m([0m[0mstring[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;31m# Add the pre-example text to `output`.[0m[0;34m[0m
+[0;34m[0m            [0moutput[0m[0;34m.[0m[0mappend[0m[0;34m([0m[0mstring[0m[0;34m[[0m[0mcharno[0m[0;34m:[0m[0mm[0m[0;34m.[0m[0mstart[0m[0;34m([0m[0;34m)[0m[0;34m][0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;31m# Update lineno (lines before this example)[0m[0;34m[0m
+[0;34m[0m            [0mlineno[0m [0;34m+=[0m [0mstring[0m[0;34m.[0m[0mcount[0m[0;34m([0m[0;34m'\n'[0m[0;34m,[0m [0mcharno[0m[0;34m,[0m [0mm[0m[0;34m.[0m[0mstart[0m[0;34m([0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;31m# Extract info from the regexp match.[0m[0;34m[0m
+[0;34m[0m            [0;34m([0m[0msource[0m[0;34m,[0m [0moptions[0m[0;34m,[0m [0mwant[0m[0;34m,[0m [0mexc_msg[0m[0;34m)[0m [0;34m=[0m \
+                     [0mself[0m[0;34m.[0m[0m_parse_example[0m[0;34m([0m[0mm[0m[0;34m,[0m [0mname[0m[0;34m,[0m [0mlineno[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;31m# Create an Example, and add it to the list.[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0;32mnot[0m [0mself[0m[0;34m.[0m[0m_IS_BLANK_OR_COMMENT[0m[0;34m([0m[0msource[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0moutput[0m[0;34m.[0m[0mappend[0m[0;34m([0m [0mExample[0m[0;34m([0m[0msource[0m[0;34m,[0m [0mwant[0m[0;34m,[0m [0mexc_msg[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                                    [0mlineno[0m[0;34m=[0m[0mlineno[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                                    [0mindent[0m[0;34m=[0m[0mmin_indent[0m[0;34m+[0m[0mlen[0m[0;34m([0m[0mm[0m[0;34m.[0m[0mgroup[0m[0;34m([0m[0;34m'indent'[0m[0;34m)[0m[0;34m)[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                                    [0moptions[0m[0;34m=[0m[0moptions[0m[0;34m)[0m [0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;31m# Update lineno (lines inside this example)[0m[0;34m[0m
+[0;34m[0m            [0mlineno[0m [0;34m+=[0m [0mstring[0m[0;34m.[0m[0mcount[0m[0;34m([0m[0;34m'\n'[0m[0;34m,[0m [0mm[0m[0;34m.[0m[0mstart[0m[0;34m([0m[0;34m)[0m[0;34m,[0m [0mm[0m[0;34m.[0m[0mend[0m[0;34m([0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;31m# Update charno.[0m[0;34m[0m
+[0;34m[0m            [0mcharno[0m [0;34m=[0m [0mm[0m[0;34m.[0m[0mend[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;31m# Add any remaining post-example text to `output`.[0m[0;34m[0m
+[0;34m[0m        [0moutput[0m[0;34m.[0m[0mappend[0m[0;34m([0m[0mstring[0m[0;34m[[0m[0mcharno[0m[0;34m:[0m[0;34m][0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0moutput[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0mget_doctest[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mstring[0m[0;34m,[0m [0mglobs[0m[0;34m,[0m [0mname[0m[0;34m,[0m [0mfilename[0m[0;34m,[0m [0mlineno[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Extract all doctest examples from the given string, and[0m
+[0;34m        collect them into a `DocTest` object.[0m
+[0;34m[0m
+[0;34m        `globs`, `name`, `filename`, and `lineno` are attributes for[0m
+[0;34m        the new `DocTest` object.  See the documentation for `DocTest`[0m
+[0;34m        for more information.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mDocTest[0m[0;34m([0m[0mself[0m[0;34m.[0m[0mget_examples[0m[0;34m([0m[0mstring[0m[0;34m,[0m [0mname[0m[0;34m)[0m[0;34m,[0m [0mglobs[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                       [0mname[0m[0;34m,[0m [0mfilename[0m[0;34m,[0m [0mlineno[0m[0;34m,[0m [0mstring[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0mget_examples[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mstring[0m[0;34m,[0m [0mname[0m[0;34m=[0m[0;34m'<string>'[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Extract all doctest examples from the given string, and return[0m
+[0;34m        them as a list of `Example` objects.  Line numbers are[0m
+[0;34m        0-based, because it's most common in doctests that nothing[0m
+[0;34m        interesting appears on the same line as opening triple-quote,[0m
+[0;34m        and so the first interesting line is called \"line 1\" then.[0m
+[0;34m[0m
+[0;34m        The optional argument `name` is a name identifying this[0m
+[0;34m        string, and is only used for error messages.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0;34m[[0m[0mx[0m [0;32mfor[0m [0mx[0m [0;32min[0m [0mself[0m[0;34m.[0m[0mparse[0m[0;34m([0m[0mstring[0m[0;34m,[0m [0mname[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                [0;32mif[0m [0misinstance[0m[0;34m([0m[0mx[0m[0;34m,[0m [0mExample[0m[0;34m)[0m[0;34m][0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m_parse_example[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mm[0m[0;34m,[0m [0mname[0m[0;34m,[0m [0mlineno[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Given a regular expression match from `_EXAMPLE_RE` (`m`),[0m
+[0;34m        return a pair `(source, want)`, where `source` is the matched[0m
+[0;34m        example's source code (with prompts and indentation stripped);[0m
+[0;34m        and `want` is the example's expected output (with indentation[0m
+[0;34m        stripped).[0m
+[0;34m[0m
+[0;34m        `name` is the string's name, and `lineno` is the line number[0m
+[0;34m        where the example starts; both are used for error messages.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0;31m# Get the example's indentation level.[0m[0;34m[0m
+[0;34m[0m        [0mindent[0m [0;34m=[0m [0mlen[0m[0;34m([0m[0mm[0m[0;34m.[0m[0mgroup[0m[0;34m([0m[0;34m'indent'[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Divide source into lines; check that they're properly[0m[0;34m[0m
+[0;34m[0m        [0;31m# indented; and then strip their indentation & prompts.[0m[0;34m[0m
+[0;34m[0m        [0msource_lines[0m [0;34m=[0m [0mm[0m[0;34m.[0m[0mgroup[0m[0;34m([0m[0;34m'source'[0m[0;34m)[0m[0;34m.[0m[0msplit[0m[0;34m([0m[0;34m'\n'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0m_check_prompt_blank[0m[0;34m([0m[0msource_lines[0m[0;34m,[0m [0mindent[0m[0;34m,[0m [0mname[0m[0;34m,[0m [0mlineno[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0m_check_prefix[0m[0;34m([0m[0msource_lines[0m[0;34m[[0m[0;36m1[0m[0;34m:[0m[0;34m][0m[0;34m,[0m [0;34m' '[0m[0;34m*[0m[0mindent[0m [0;34m+[0m [0;34m'.'[0m[0;34m,[0m [0mname[0m[0;34m,[0m [0mlineno[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0msource[0m [0;34m=[0m [0;34m'\n'[0m[0;34m.[0m[0mjoin[0m[0;34m([0m[0;34m[[0m[0msl[0m[0;34m[[0m[0mindent[0m[0;34m+[0m[0;36m4[0m[0;34m:[0m[0;34m][0m [0;32mfor[0m [0msl[0m [0;32min[0m [0msource_lines[0m[0;34m][0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Divide want into lines; check that it's properly indented; and[0m[0;34m[0m
+[0;34m[0m        [0;31m# then strip the indentation.  Spaces before the last newline should[0m[0;34m[0m
+[0;34m[0m        [0;31m# be preserved, so plain rstrip() isn't good enough.[0m[0;34m[0m
+[0;34m[0m        [0mwant[0m [0;34m=[0m [0mm[0m[0;34m.[0m[0mgroup[0m[0;34m([0m[0;34m'want'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0mwant_lines[0m [0;34m=[0m [0mwant[0m[0;34m.[0m[0msplit[0m[0;34m([0m[0;34m'\n'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mlen[0m[0;34m([0m[0mwant_lines[0m[0;34m)[0m [0;34m>[0m [0;36m1[0m [0;32mand[0m [0mre[0m[0;34m.[0m[0mmatch[0m[0;34m([0m[0;34mr' *$'[0m[0;34m,[0m [0mwant_lines[0m[0;34m[[0m[0;34m-[0m[0;36m1[0m[0;34m][0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mdel[0m [0mwant_lines[0m[0;34m[[0m[0;34m-[0m[0;36m1[0m[0;34m][0m  [0;31m# forget final newline & spaces after it[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0m_check_prefix[0m[0;34m([0m[0mwant_lines[0m[0;34m,[0m [0;34m' '[0m[0;34m*[0m[0mindent[0m[0;34m,[0m [0mname[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                           [0mlineno[0m [0;34m+[0m [0mlen[0m[0;34m([0m[0msource_lines[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0mwant[0m [0;34m=[0m [0;34m'\n'[0m[0;34m.[0m[0mjoin[0m[0;34m([0m[0;34m[[0m[0mwl[0m[0;34m[[0m[0mindent[0m[0;34m:[0m[0;34m][0m [0;32mfor[0m [0mwl[0m [0;32min[0m [0mwant_lines[0m[0;34m][0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# If `want` contains a traceback message, then extract it.[0m[0;34m[0m
+[0;34m[0m        [0mm[0m [0;34m=[0m [0mself[0m[0;34m.[0m[0m_EXCEPTION_RE[0m[0;34m.[0m[0mmatch[0m[0;34m([0m[0mwant[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mm[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mexc_msg[0m [0;34m=[0m [0mm[0m[0;34m.[0m[0mgroup[0m[0;34m([0m[0;34m'msg'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mexc_msg[0m [0;34m=[0m [0mNone[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Extract options from the source.[0m[0;34m[0m
+[0;34m[0m        [0moptions[0m [0;34m=[0m [0mself[0m[0;34m.[0m[0m_find_options[0m[0;34m([0m[0msource[0m[0;34m,[0m [0mname[0m[0;34m,[0m [0mlineno[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0msource[0m[0;34m,[0m [0moptions[0m[0;34m,[0m [0mwant[0m[0;34m,[0m [0mexc_msg[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;31m# This regular expression looks for option directives in the[0m[0;34m[0m
+[0;34m[0m    [0;31m# source code of an example.  Option directives are comments[0m[0;34m[0m
+[0;34m[0m    [0;31m# starting with "doctest:".  Warning: this may give false[0m[0;34m[0m
+[0;34m[0m    [0;31m# positives for string-literals that contain the string[0m[0;34m[0m
+[0;34m[0m    [0;31m# "#doctest:".  Eliminating these false positives would require[0m[0;34m[0m
+[0;34m[0m    [0;31m# actually parsing the string; but we limit them by ignoring any[0m[0;34m[0m
+[0;34m[0m    [0;31m# line containing "#doctest:" that is *followed* by a quote mark.[0m[0;34m[0m
+[0;34m[0m    [0m_OPTION_DIRECTIVE_RE[0m [0;34m=[0m [0mre[0m[0;34m.[0m[0mcompile[0m[0;34m([0m[0;34mr'#\s*doctest:\s*([^\n\'"]*)$'[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                                      [0mre[0m[0;34m.[0m[0mMULTILINE[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m_find_options[0m[0;34m([0m[0mself[0m[0;34m,[0m [0msource[0m[0;34m,[0m [0mname[0m[0;34m,[0m [0mlineno[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Return a dictionary containing option overrides extracted from[0m
+[0;34m        option directives in the given source string.[0m
+[0;34m[0m
+[0;34m        `name` is the string's name, and `lineno` is the line number[0m
+[0;34m        where the example starts; both are used for error messages.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0moptions[0m [0;34m=[0m [0;34m{[0m[0;34m}[0m[0;34m[0m
+[0;34m[0m        [0;31m# (note: with the current regexp, this will match at most once:)[0m[0;34m[0m
+[0;34m[0m        [0;32mfor[0m [0mm[0m [0;32min[0m [0mself[0m[0;34m.[0m[0m_OPTION_DIRECTIVE_RE[0m[0;34m.[0m[0mfinditer[0m[0;34m([0m[0msource[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0moption_strings[0m [0;34m=[0m [0mm[0m[0;34m.[0m[0mgroup[0m[0;34m([0m[0;36m1[0m[0;34m)[0m[0;34m.[0m[0mreplace[0m[0;34m([0m[0;34m','[0m[0;34m,[0m [0;34m' '[0m[0;34m)[0m[0;34m.[0m[0msplit[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32mfor[0m [0moption[0m [0;32min[0m [0moption_strings[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mif[0m [0;34m([0m[0moption[0m[0;34m[[0m[0;36m0[0m[0;34m][0m [0;32mnot[0m [0;32min[0m [0;34m'+-'[0m [0;32mor[0m[0;34m[0m
+[0;34m[0m                    [0moption[0m[0;34m[[0m[0;36m1[0m[0;34m:[0m[0;34m][0m [0;32mnot[0m [0;32min[0m [0mOPTIONFLAGS_BY_NAME[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0;32mraise[0m [0mValueError[0m[0;34m([0m[0;34m'line %r of the doctest for %s '[0m[0;34m[0m
+[0;34m[0m                                     [0;34m'has an invalid option: %r'[0m [0;34m%[0m[0;34m[0m
+[0;34m[0m                                     [0;34m([0m[0mlineno[0m[0;34m+[0m[0;36m1[0m[0;34m,[0m [0mname[0m[0;34m,[0m [0moption[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                [0mflag[0m [0;34m=[0m [0mOPTIONFLAGS_BY_NAME[0m[0;34m[[0m[0moption[0m[0;34m[[0m[0;36m1[0m[0;34m:[0m[0;34m][0m[0;34m][0m[0;34m[0m
+[0;34m[0m                [0moptions[0m[0;34m[[0m[0mflag[0m[0;34m][0m [0;34m=[0m [0;34m([0m[0moption[0m[0;34m[[0m[0;36m0[0m[0;34m][0m [0;34m==[0m [0;34m'+'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0moptions[0m [0;32mand[0m [0mself[0m[0;34m.[0m[0m_IS_BLANK_OR_COMMENT[0m[0;34m([0m[0msource[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mraise[0m [0mValueError[0m[0;34m([0m[0;34m'line %r of the doctest for %s has an option '[0m[0;34m[0m
+[0;34m[0m                             [0;34m'directive on a line with no example: %r'[0m [0;34m%[0m[0;34m[0m
+[0;34m[0m                             [0;34m([0m[0mlineno[0m[0;34m,[0m [0mname[0m[0;34m,[0m [0msource[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0moptions[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;31m# This regular expression finds the indentation of every non-blank[0m[0;34m[0m
+[0;34m[0m    [0;31m# line in a string.[0m[0;34m[0m
+[0;34m[0m    [0m_INDENT_RE[0m [0;34m=[0m [0mre[0m[0;34m.[0m[0mcompile[0m[0;34m([0m[0;34m'^([ ]*)(?=\S)'[0m[0;34m,[0m [0mre[0m[0;34m.[0m[0mMULTILINE[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m_min_indent[0m[0;34m([0m[0mself[0m[0;34m,[0m [0ms[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"Return the minimum indentation of any non-blank line in `s`"[0m[0;34m[0m
+[0;34m[0m        [0mindents[0m [0;34m=[0m [0;34m[[0m[0mlen[0m[0;34m([0m[0mindent[0m[0;34m)[0m [0;32mfor[0m [0mindent[0m [0;32min[0m [0mself[0m[0;34m.[0m[0m_INDENT_RE[0m[0;34m.[0m[0mfindall[0m[0;34m([0m[0ms[0m[0;34m)[0m[0;34m][0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mlen[0m[0;34m([0m[0mindents[0m[0;34m)[0m [0;34m>[0m [0;36m0[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mmin[0m[0;34m([0m[0mindents[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0;36m0[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m_check_prompt_blank[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mlines[0m[0;34m,[0m [0mindent[0m[0;34m,[0m [0mname[0m[0;34m,[0m [0mlineno[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Given the lines of a source string (including prompts and[0m
+[0;34m        leading indentation), check to make sure that every prompt is[0m
+[0;34m        followed by a space character.  If any line is not followed by[0m
+[0;34m        a space character, then raise ValueError.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0;32mfor[0m [0mi[0m[0;34m,[0m [0mline[0m [0;32min[0m [0menumerate[0m[0;34m([0m[0mlines[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mlen[0m[0;34m([0m[0mline[0m[0;34m)[0m [0;34m>=[0m [0mindent[0m[0;34m+[0m[0;36m4[0m [0;32mand[0m [0mline[0m[0;34m[[0m[0mindent[0m[0;34m+[0m[0;36m3[0m[0;34m][0m [0;34m!=[0m [0;34m' '[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mraise[0m [0mValueError[0m[0;34m([0m[0;34m'line %r of the docstring for %s '[0m[0;34m[0m
+[0;34m[0m                                 [0;34m'lacks blank after %s: %r'[0m [0;34m%[0m[0;34m[0m
+[0;34m[0m                                 [0;34m([0m[0mlineno[0m[0;34m+[0m[0mi[0m[0;34m+[0m[0;36m1[0m[0;34m,[0m [0mname[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                                  [0mline[0m[0;34m[[0m[0mindent[0m[0;34m:[0m[0mindent[0m[0;34m+[0m[0;36m3[0m[0;34m][0m[0;34m,[0m [0mline[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m_check_prefix[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mlines[0m[0;34m,[0m [0mprefix[0m[0;34m,[0m [0mname[0m[0;34m,[0m [0mlineno[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Check that every line in the given list starts with the given[0m
+[0;34m        prefix; if any line does not, then raise a ValueError.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0;32mfor[0m [0mi[0m[0;34m,[0m [0mline[0m [0;32min[0m [0menumerate[0m[0;34m([0m[0mlines[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mline[0m [0;32mand[0m [0;32mnot[0m [0mline[0m[0;34m.[0m[0mstartswith[0m[0;34m([0m[0mprefix[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mraise[0m [0mValueError[0m[0;34m([0m[0;34m'line %r of the docstring for %s has '[0m[0;34m[0m
+[0;34m[0m                                 [0;34m'inconsistent leading whitespace: %r'[0m [0;34m%[0m[0;34m[0m
+[0;34m[0m                                 [0;34m([0m[0mlineno[0m[0;34m+[0m[0mi[0m[0;34m+[0m[0;36m1[0m[0;34m,[0m [0mname[0m[0;34m,[0m [0mline[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;31m######################################################################[0m[0;34m[0m
+[0;34m[0m[0;31m## 4. DocTest Finder[0m[0;34m[0m
+[0;34m[0m[0;31m######################################################################[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mclass[0m [0mDocTestFinder[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;34m"""[0m
+[0;34m    A class used to extract the DocTests that are relevant to a given[0m
+[0;34m    object, from its docstring and the docstrings of its contained[0m
+[0;34m    objects.  Doctests can currently be extracted from the following[0m
+[0;34m    object types: modules, functions, classes, methods, staticmethods,[0m
+[0;34m    classmethods, and properties.[0m
+[0;34m    """[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__init__[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mverbose[0m[0;34m=[0m[0mFalse[0m[0;34m,[0m [0mparser[0m[0;34m=[0m[0mDocTestParser[0m[0;34m([0m[0;34m)[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                 [0mrecurse[0m[0;34m=[0m[0mTrue[0m[0;34m,[0m [0mexclude_empty[0m[0;34m=[0m[0mTrue[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Create a new doctest finder.[0m
+[0;34m[0m
+[0;34m        The optional argument `parser` specifies a class or[0m
+[0;34m        function that should be used to create new DocTest objects (or[0m
+[0;34m        objects that implement the same interface as DocTest).  The[0m
+[0;34m        signature for this factory function should match the signature[0m
+[0;34m        of the DocTest constructor.[0m
+[0;34m[0m
+[0;34m        If the optional argument `recurse` is false, then `find` will[0m
+[0;34m        only examine the given object, and not any contained objects.[0m
+[0;34m[0m
+[0;34m        If the optional argument `exclude_empty` is false, then `find`[0m
+[0;34m        will include tests for objects with empty docstrings.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0m_parser[0m [0;34m=[0m [0mparser[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0m_verbose[0m [0;34m=[0m [0mverbose[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0m_recurse[0m [0;34m=[0m [0mrecurse[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0m_exclude_empty[0m [0;34m=[0m [0mexclude_empty[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0mfind[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mobj[0m[0;34m,[0m [0mname[0m[0;34m=[0m[0mNone[0m[0;34m,[0m [0mmodule[0m[0;34m=[0m[0mNone[0m[0;34m,[0m [0mglobs[0m[0;34m=[0m[0mNone[0m[0;34m,[0m [0mextraglobs[0m[0;34m=[0m[0mNone[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Return a list of the DocTests that are defined by the given[0m
+[0;34m        object's docstring, or by any of its contained objects'[0m
+[0;34m        docstrings.[0m
+[0;34m[0m
+[0;34m        The optional parameter `module` is the module that contains[0m
+[0;34m        the given object.  If the module is not specified or is None, then[0m
+[0;34m        the test finder will attempt to automatically determine the[0m
+[0;34m        correct module.  The object's module is used:[0m
+[0;34m[0m
+[0;34m            - As a default namespace, if `globs` is not specified.[0m
+[0;34m            - To prevent the DocTestFinder from extracting DocTests[0m
+[0;34m              from objects that are imported from other modules.[0m
+[0;34m            - To find the name of the file containing the object.[0m
+[0;34m            - To help find the line number of the object within its[0m
+[0;34m              file.[0m
+[0;34m[0m
+[0;34m        Contained objects whose module does not match `module` are ignored.[0m
+[0;34m[0m
+[0;34m        If `module` is False, no attempt to find the module will be made.[0m
+[0;34m        This is obscure, of use mostly in tests:  if `module` is False, or[0m
+[0;34m        is None but cannot be found automatically, then all objects are[0m
+[0;34m        considered to belong to the (non-existent) module, so all contained[0m
+[0;34m        objects will (recursively) be searched for doctests.[0m
+[0;34m[0m
+[0;34m        The globals for each DocTest is formed by combining `globs`[0m
+[0;34m        and `extraglobs` (bindings in `extraglobs` override bindings[0m
+[0;34m        in `globs`).  A new copy of the globals dictionary is created[0m
+[0;34m        for each DocTest.  If `globs` is not specified, then it[0m
+[0;34m        defaults to the module's `__dict__`, if specified, or {}[0m
+[0;34m        otherwise.  If `extraglobs` is not specified, then it defaults[0m
+[0;34m        to {}.[0m
+[0;34m[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0;31m# If name was not specified, then extract it from the object.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mname[0m [0;32mis[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mname[0m [0;34m=[0m [0mgetattr[0m[0;34m([0m[0mobj[0m[0;34m,[0m [0;34m'__name__'[0m[0;34m,[0m [0mNone[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mname[0m [0;32mis[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mraise[0m [0mValueError[0m[0;34m([0m[0;34m"DocTestFinder.find: name must be given "[0m[0;34m[0m
+[0;34m[0m                        [0;34m"when obj.__name__ doesn't exist: %r"[0m [0;34m%[0m[0;34m[0m
+[0;34m[0m                                 [0;34m([0m[0mtype[0m[0;34m([0m[0mobj[0m[0;34m)[0m[0;34m,[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Find the module that contains the given object (if obj is[0m[0;34m[0m
+[0;34m[0m        [0;31m# a module, then module=obj.).  Note: this may fail, in which[0m[0;34m[0m
+[0;34m[0m        [0;31m# case module will be None.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mmodule[0m [0;32mis[0m [0mFalse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mmodule[0m [0;34m=[0m [0mNone[0m[0;34m[0m
+[0;34m[0m        [0;32melif[0m [0mmodule[0m [0;32mis[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mmodule[0m [0;34m=[0m [0minspect[0m[0;34m.[0m[0mgetmodule[0m[0;34m([0m[0mobj[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Read the module's source code.  This is used by[0m[0;34m[0m
+[0;34m[0m        [0;31m# DocTestFinder._find_lineno to find the line number for a[0m[0;34m[0m
+[0;34m[0m        [0;31m# given object's docstring.[0m[0;34m[0m
+[0;34m[0m        [0;32mtry[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mfile[0m [0;34m=[0m [0minspect[0m[0;34m.[0m[0mgetsourcefile[0m[0;34m([0m[0mobj[0m[0;34m)[0m [0;32mor[0m [0minspect[0m[0;34m.[0m[0mgetfile[0m[0;34m([0m[0mobj[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mmodule[0m [0;32mis[0m [0;32mnot[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;31m# Supply the module globals in case the module was[0m[0;34m[0m
+[0;34m[0m                [0;31m# originally loaded via a PEP 302 loader and[0m[0;34m[0m
+[0;34m[0m                [0;31m# file is not a valid filesystem path[0m[0;34m[0m
+[0;34m[0m                [0msource_lines[0m [0;34m=[0m [0mlinecache[0m[0;34m.[0m[0mgetlines[0m[0;34m([0m[0mfile[0m[0;34m,[0m [0mmodule[0m[0;34m.[0m[0m__dict__[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;31m# No access to a loader, so assume it's a normal[0m[0;34m[0m
+[0;34m[0m                [0;31m# filesystem path[0m[0;34m[0m
+[0;34m[0m                [0msource_lines[0m [0;34m=[0m [0mlinecache[0m[0;34m.[0m[0mgetlines[0m[0;34m([0m[0mfile[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0;32mnot[0m [0msource_lines[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0msource_lines[0m [0;34m=[0m [0mNone[0m[0;34m[0m
+[0;34m[0m        [0;32mexcept[0m [0mTypeError[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0msource_lines[0m [0;34m=[0m [0mNone[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Initialize globals, and merge in extraglobs.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mglobs[0m [0;32mis[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mmodule[0m [0;32mis[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mglobs[0m [0;34m=[0m [0;34m{[0m[0;34m}[0m[0;34m[0m
+[0;34m[0m            [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mglobs[0m [0;34m=[0m [0mmodule[0m[0;34m.[0m[0m__dict__[0m[0;34m.[0m[0mcopy[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mglobs[0m [0;34m=[0m [0mglobs[0m[0;34m.[0m[0mcopy[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mextraglobs[0m [0;32mis[0m [0;32mnot[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mglobs[0m[0;34m.[0m[0mupdate[0m[0;34m([0m[0mextraglobs[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0;34m'__name__'[0m [0;32mnot[0m [0;32min[0m [0mglobs[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mglobs[0m[0;34m[[0m[0;34m'__name__'[0m[0;34m][0m [0;34m=[0m [0;34m'__main__'[0m  [0;31m# provide a default module name[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Recursively explore `obj`, extracting DocTests.[0m[0;34m[0m
+[0;34m[0m        [0mtests[0m [0;34m=[0m [0;34m[[0m[0;34m][0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0m_find[0m[0;34m([0m[0mtests[0m[0;34m,[0m [0mobj[0m[0;34m,[0m [0mname[0m[0;34m,[0m [0mmodule[0m[0;34m,[0m [0msource_lines[0m[0;34m,[0m [0mglobs[0m[0;34m,[0m [0;34m{[0m[0;34m}[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;31m# Sort the tests by alpha order of names, for consistency in[0m[0;34m[0m
+[0;34m[0m        [0;31m# verbose-mode output.  This was a feature of doctest in Pythons[0m[0;34m[0m
+[0;34m[0m        [0;31m# <= 2.3 that got lost by accident in 2.4.  It was repaired in[0m[0;34m[0m
+[0;34m[0m        [0;31m# 2.4.4 and 2.5.[0m[0;34m[0m
+[0;34m[0m        [0mtests[0m[0;34m.[0m[0msort[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mtests[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m_from_module[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mmodule[0m[0;34m,[0m [0mobject[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Return true if the given object is defined in the given[0m
+[0;34m        module.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mmodule[0m [0;32mis[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mTrue[0m[0;34m[0m
+[0;34m[0m        [0;32melif[0m [0minspect[0m[0;34m.[0m[0mgetmodule[0m[0;34m([0m[0mobject[0m[0;34m)[0m [0;32mis[0m [0;32mnot[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mmodule[0m [0;32mis[0m [0minspect[0m[0;34m.[0m[0mgetmodule[0m[0;34m([0m[0mobject[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32melif[0m [0minspect[0m[0;34m.[0m[0misfunction[0m[0;34m([0m[0mobject[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mmodule[0m[0;34m.[0m[0m__dict__[0m [0;32mis[0m [0mobject[0m[0;34m.[0m[0mfunc_globals[0m[0;34m[0m
+[0;34m[0m        [0;32melif[0m [0minspect[0m[0;34m.[0m[0misclass[0m[0;34m([0m[0mobject[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mmodule[0m[0;34m.[0m[0m__name__[0m [0;34m==[0m [0mobject[0m[0;34m.[0m[0m__module__[0m[0;34m[0m
+[0;34m[0m        [0;32melif[0m [0mhasattr[0m[0;34m([0m[0mobject[0m[0;34m,[0m [0;34m'__module__'[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mmodule[0m[0;34m.[0m[0m__name__[0m [0;34m==[0m [0mobject[0m[0;34m.[0m[0m__module__[0m[0;34m[0m
+[0;34m[0m        [0;32melif[0m [0misinstance[0m[0;34m([0m[0mobject[0m[0;34m,[0m [0mproperty[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mTrue[0m [0;31m# [XX] no way not be sure.[0m[0;34m[0m
+[0;34m[0m        [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mraise[0m [0mValueError[0m[0;34m([0m[0;34m"object must be a class or function"[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m_find[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mtests[0m[0;34m,[0m [0mobj[0m[0;34m,[0m [0mname[0m[0;34m,[0m [0mmodule[0m[0;34m,[0m [0msource_lines[0m[0;34m,[0m [0mglobs[0m[0;34m,[0m [0mseen[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Find tests for the given object and any contained objects, and[0m
+[0;34m        add them to `tests`.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mself[0m[0;34m.[0m[0m_verbose[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mprint[0m [0;34m'Finding tests in %s'[0m [0;34m%[0m [0mname[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# If we've already processed this object, then ignore it.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mid[0m[0;34m([0m[0mobj[0m[0;34m)[0m [0;32min[0m [0mseen[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m[0;34m[0m
+[0;34m[0m        [0mseen[0m[0;34m[[0m[0mid[0m[0;34m([0m[0mobj[0m[0;34m)[0m[0;34m][0m [0;34m=[0m [0;36m1[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Find a test for this object, and add it to the list of tests.[0m[0;34m[0m
+[0;34m[0m        [0mtest[0m [0;34m=[0m [0mself[0m[0;34m.[0m[0m_get_test[0m[0;34m([0m[0mobj[0m[0;34m,[0m [0mname[0m[0;34m,[0m [0mmodule[0m[0;34m,[0m [0mglobs[0m[0;34m,[0m [0msource_lines[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mtest[0m [0;32mis[0m [0;32mnot[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mtests[0m[0;34m.[0m[0mappend[0m[0;34m([0m[0mtest[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Look for tests in a module's contained objects.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0minspect[0m[0;34m.[0m[0mismodule[0m[0;34m([0m[0mobj[0m[0;34m)[0m [0;32mand[0m [0mself[0m[0;34m.[0m[0m_recurse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mfor[0m [0mvalname[0m[0;34m,[0m [0mval[0m [0;32min[0m [0mobj[0m[0;34m.[0m[0m__dict__[0m[0;34m.[0m[0mitems[0m[0;34m([0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mvalname[0m [0;34m=[0m [0;34m'%s.%s'[0m [0;34m%[0m [0;34m([0m[0mname[0m[0;34m,[0m [0mvalname[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                [0;31m# Recurse to functions & classes.[0m[0;34m[0m
+[0;34m[0m                [0;32mif[0m [0;34m([0m[0;34m([0m[0minspect[0m[0;34m.[0m[0misfunction[0m[0;34m([0m[0mval[0m[0;34m)[0m [0;32mor[0m [0minspect[0m[0;34m.[0m[0misclass[0m[0;34m([0m[0mval[0m[0;34m)[0m[0;34m)[0m [0;32mand[0m[0;34m[0m
+[0;34m[0m                    [0mself[0m[0;34m.[0m[0m_from_module[0m[0;34m([0m[0mmodule[0m[0;34m,[0m [0mval[0m[0;34m)[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0mself[0m[0;34m.[0m[0m_find[0m[0;34m([0m[0mtests[0m[0;34m,[0m [0mval[0m[0;34m,[0m [0mvalname[0m[0;34m,[0m [0mmodule[0m[0;34m,[0m [0msource_lines[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                               [0mglobs[0m[0;34m,[0m [0mseen[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Look for tests in a module's __test__ dictionary.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0minspect[0m[0;34m.[0m[0mismodule[0m[0;34m([0m[0mobj[0m[0;34m)[0m [0;32mand[0m [0mself[0m[0;34m.[0m[0m_recurse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mfor[0m [0mvalname[0m[0;34m,[0m [0mval[0m [0;32min[0m [0mgetattr[0m[0;34m([0m[0mobj[0m[0;34m,[0m [0;34m'__test__'[0m[0;34m,[0m [0;34m{[0m[0;34m}[0m[0;34m)[0m[0;34m.[0m[0mitems[0m[0;34m([0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mif[0m [0;32mnot[0m [0misinstance[0m[0;34m([0m[0mvalname[0m[0;34m,[0m [0mbasestring[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0;32mraise[0m [0mValueError[0m[0;34m([0m[0;34m"DocTestFinder.find: __test__ keys "[0m[0;34m[0m
+[0;34m[0m                                     [0;34m"must be strings: %r"[0m [0;34m%[0m[0;34m[0m
+[0;34m[0m                                     [0;34m([0m[0mtype[0m[0;34m([0m[0mvalname[0m[0;34m)[0m[0;34m,[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                [0;32mif[0m [0;32mnot[0m [0;34m([0m[0minspect[0m[0;34m.[0m[0misfunction[0m[0;34m([0m[0mval[0m[0;34m)[0m [0;32mor[0m [0minspect[0m[0;34m.[0m[0misclass[0m[0;34m([0m[0mval[0m[0;34m)[0m [0;32mor[0m[0;34m[0m
+[0;34m[0m                        [0minspect[0m[0;34m.[0m[0mismethod[0m[0;34m([0m[0mval[0m[0;34m)[0m [0;32mor[0m [0minspect[0m[0;34m.[0m[0mismodule[0m[0;34m([0m[0mval[0m[0;34m)[0m [0;32mor[0m[0;34m[0m
+[0;34m[0m                        [0misinstance[0m[0;34m([0m[0mval[0m[0;34m,[0m [0mbasestring[0m[0;34m)[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0;32mraise[0m [0mValueError[0m[0;34m([0m[0;34m"DocTestFinder.find: __test__ values "[0m[0;34m[0m
+[0;34m[0m                                     [0;34m"must be strings, functions, methods, "[0m[0;34m[0m
+[0;34m[0m                                     [0;34m"classes, or modules: %r"[0m [0;34m%[0m[0;34m[0m
+[0;34m[0m                                     [0;34m([0m[0mtype[0m[0;34m([0m[0mval[0m[0;34m)[0m[0;34m,[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                [0mvalname[0m [0;34m=[0m [0;34m'%s.__test__.%s'[0m [0;34m%[0m [0;34m([0m[0mname[0m[0;34m,[0m [0mvalname[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                [0mself[0m[0;34m.[0m[0m_find[0m[0;34m([0m[0mtests[0m[0;34m,[0m [0mval[0m[0;34m,[0m [0mvalname[0m[0;34m,[0m [0mmodule[0m[0;34m,[0m [0msource_lines[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                           [0mglobs[0m[0;34m,[0m [0mseen[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Look for tests in a class's contained objects.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0minspect[0m[0;34m.[0m[0misclass[0m[0;34m([0m[0mobj[0m[0;34m)[0m [0;32mand[0m [0mself[0m[0;34m.[0m[0m_recurse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mfor[0m [0mvalname[0m[0;34m,[0m [0mval[0m [0;32min[0m [0mobj[0m[0;34m.[0m[0m__dict__[0m[0;34m.[0m[0mitems[0m[0;34m([0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;31m# Special handling for staticmethod/classmethod.[0m[0;34m[0m
+[0;34m[0m                [0;32mif[0m [0misinstance[0m[0;34m([0m[0mval[0m[0;34m,[0m [0mstaticmethod[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0mval[0m [0;34m=[0m [0mgetattr[0m[0;34m([0m[0mobj[0m[0;34m,[0m [0mvalname[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                [0;32mif[0m [0misinstance[0m[0;34m([0m[0mval[0m[0;34m,[0m [0mclassmethod[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0mval[0m [0;34m=[0m [0mgetattr[0m[0;34m([0m[0mobj[0m[0;34m,[0m [0mvalname[0m[0;34m)[0m[0;34m.[0m[0mim_func[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m                [0;31m# Recurse to methods, properties, and nested classes.[0m[0;34m[0m
+[0;34m[0m                [0;32mif[0m [0;34m([0m[0;34m([0m[0minspect[0m[0;34m.[0m[0misfunction[0m[0;34m([0m[0mval[0m[0;34m)[0m [0;32mor[0m [0minspect[0m[0;34m.[0m[0misclass[0m[0;34m([0m[0mval[0m[0;34m)[0m [0;32mor[0m[0;34m[0m
+[0;34m[0m                      [0misinstance[0m[0;34m([0m[0mval[0m[0;34m,[0m [0mproperty[0m[0;34m)[0m[0;34m)[0m [0;32mand[0m[0;34m[0m
+[0;34m[0m                      [0mself[0m[0;34m.[0m[0m_from_module[0m[0;34m([0m[0mmodule[0m[0;34m,[0m [0mval[0m[0;34m)[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0mvalname[0m [0;34m=[0m [0;34m'%s.%s'[0m [0;34m%[0m [0;34m([0m[0mname[0m[0;34m,[0m [0mvalname[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                    [0mself[0m[0;34m.[0m[0m_find[0m[0;34m([0m[0mtests[0m[0;34m,[0m [0mval[0m[0;34m,[0m [0mvalname[0m[0;34m,[0m [0mmodule[0m[0;34m,[0m [0msource_lines[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                               [0mglobs[0m[0;34m,[0m [0mseen[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m_get_test[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mobj[0m[0;34m,[0m [0mname[0m[0;34m,[0m [0mmodule[0m[0;34m,[0m [0mglobs[0m[0;34m,[0m [0msource_lines[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Return a DocTest for the given object, if it defines a docstring;[0m
+[0;34m        otherwise, return None.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0;31m# Extract the object's docstring.  If it doesn't have one,[0m[0;34m[0m
+[0;34m[0m        [0;31m# then return None (no test for this object).[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0misinstance[0m[0;34m([0m[0mobj[0m[0;34m,[0m [0mbasestring[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mdocstring[0m [0;34m=[0m [0mobj[0m[0;34m[0m
+[0;34m[0m        [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mtry[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mif[0m [0mobj[0m[0;34m.[0m[0m__doc__[0m [0;32mis[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0mdocstring[0m [0;34m=[0m [0;34m''[0m[0;34m[0m
+[0;34m[0m                [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0mdocstring[0m [0;34m=[0m [0mobj[0m[0;34m.[0m[0m__doc__[0m[0;34m[0m
+[0;34m[0m                    [0;32mif[0m [0;32mnot[0m [0misinstance[0m[0;34m([0m[0mdocstring[0m[0;34m,[0m [0mbasestring[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                        [0mdocstring[0m [0;34m=[0m [0mstr[0m[0;34m([0m[0mdocstring[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32mexcept[0m [0;34m([0m[0mTypeError[0m[0;34m,[0m [0mAttributeError[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mdocstring[0m [0;34m=[0m [0;34m''[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Find the docstring's location in the file.[0m[0;34m[0m
+[0;34m[0m        [0mlineno[0m [0;34m=[0m [0mself[0m[0;34m.[0m[0m_find_lineno[0m[0;34m([0m[0mobj[0m[0;34m,[0m [0msource_lines[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Don't bother if the docstring is empty.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mself[0m[0;34m.[0m[0m_exclude_empty[0m [0;32mand[0m [0;32mnot[0m [0mdocstring[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mNone[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Return a DocTest for this object.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mmodule[0m [0;32mis[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mfilename[0m [0;34m=[0m [0mNone[0m[0;34m[0m
+[0;34m[0m        [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mfilename[0m [0;34m=[0m [0mgetattr[0m[0;34m([0m[0mmodule[0m[0;34m,[0m [0;34m'__file__'[0m[0;34m,[0m [0mmodule[0m[0;34m.[0m[0m__name__[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mfilename[0m[0;34m[[0m[0;34m-[0m[0;36m4[0m[0;34m:[0m[0;34m][0m [0;32min[0m [0;34m([0m[0;34m".pyc"[0m[0;34m,[0m [0;34m".pyo"[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mfilename[0m [0;34m=[0m [0mfilename[0m[0;34m[[0m[0;34m:[0m[0;34m-[0m[0;36m1[0m[0;34m][0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mself[0m[0;34m.[0m[0m_parser[0m[0;34m.[0m[0mget_doctest[0m[0;34m([0m[0mdocstring[0m[0;34m,[0m [0mglobs[0m[0;34m,[0m [0mname[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                                        [0mfilename[0m[0;34m,[0m [0mlineno[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m_find_lineno[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mobj[0m[0;34m,[0m [0msource_lines[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Return a line number of the given object's docstring.  Note:[0m
+[0;34m        this method assumes that the object has a docstring.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0mlineno[0m [0;34m=[0m [0mNone[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Find the line number for modules.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0minspect[0m[0;34m.[0m[0mismodule[0m[0;34m([0m[0mobj[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mlineno[0m [0;34m=[0m [0;36m0[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Find the line number for classes.[0m[0;34m[0m
+[0;34m[0m        [0;31m# Note: this could be fooled if a class is defined multiple[0m[0;34m[0m
+[0;34m[0m        [0;31m# times in a single file.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0minspect[0m[0;34m.[0m[0misclass[0m[0;34m([0m[0mobj[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0msource_lines[0m [0;32mis[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mreturn[0m [0mNone[0m[0;34m[0m
+[0;34m[0m            [0mpat[0m [0;34m=[0m [0mre[0m[0;34m.[0m[0mcompile[0m[0;34m([0m[0;34mr'^\s*class\s*%s\b'[0m [0;34m%[0m[0;34m[0m
+[0;34m[0m                             [0mgetattr[0m[0;34m([0m[0mobj[0m[0;34m,[0m [0;34m'__name__'[0m[0;34m,[0m [0;34m'-'[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32mfor[0m [0mi[0m[0;34m,[0m [0mline[0m [0;32min[0m [0menumerate[0m[0;34m([0m[0msource_lines[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mif[0m [0mpat[0m[0;34m.[0m[0mmatch[0m[0;34m([0m[0mline[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0mlineno[0m [0;34m=[0m [0mi[0m[0;34m[0m
+[0;34m[0m                    [0;32mbreak[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Find the line number for functions & methods.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0minspect[0m[0;34m.[0m[0mismethod[0m[0;34m([0m[0mobj[0m[0;34m)[0m[0;34m:[0m [0mobj[0m [0;34m=[0m [0mobj[0m[0;34m.[0m[0mim_func[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0minspect[0m[0;34m.[0m[0misfunction[0m[0;34m([0m[0mobj[0m[0;34m)[0m[0;34m:[0m [0mobj[0m [0;34m=[0m [0mobj[0m[0;34m.[0m[0mfunc_code[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0minspect[0m[0;34m.[0m[0mistraceback[0m[0;34m([0m[0mobj[0m[0;34m)[0m[0;34m:[0m [0mobj[0m [0;34m=[0m [0mobj[0m[0;34m.[0m[0mtb_frame[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0minspect[0m[0;34m.[0m[0misframe[0m[0;34m([0m[0mobj[0m[0;34m)[0m[0;34m:[0m [0mobj[0m [0;34m=[0m [0mobj[0m[0;34m.[0m[0mf_code[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0minspect[0m[0;34m.[0m[0miscode[0m[0;34m([0m[0mobj[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mlineno[0m [0;34m=[0m [0mgetattr[0m[0;34m([0m[0mobj[0m[0;34m,[0m [0;34m'co_firstlineno'[0m[0;34m,[0m [0mNone[0m[0;34m)[0m[0;34m-[0m[0;36m1[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Find the line number where the docstring starts.  Assume[0m[0;34m[0m
+[0;34m[0m        [0;31m# that it's the first line that begins with a quote mark.[0m[0;34m[0m
+[0;34m[0m        [0;31m# Note: this could be fooled by a multiline function[0m[0;34m[0m
+[0;34m[0m        [0;31m# signature, where a continuation line begins with a quote[0m[0;34m[0m
+[0;34m[0m        [0;31m# mark.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mlineno[0m [0;32mis[0m [0;32mnot[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0msource_lines[0m [0;32mis[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mreturn[0m [0mlineno[0m[0;34m+[0m[0;36m1[0m[0;34m[0m
+[0;34m[0m            [0mpat[0m [0;34m=[0m [0mre[0m[0;34m.[0m[0mcompile[0m[0;34m([0m[0;34m'(^|.*:)\s*\w*("|\')'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32mfor[0m [0mlineno[0m [0;32min[0m [0mrange[0m[0;34m([0m[0mlineno[0m[0;34m,[0m [0mlen[0m[0;34m([0m[0msource_lines[0m[0;34m)[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mif[0m [0mpat[0m[0;34m.[0m[0mmatch[0m[0;34m([0m[0msource_lines[0m[0;34m[[0m[0mlineno[0m[0;34m][0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0;32mreturn[0m [0mlineno[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# We couldn't find the line number.[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mNone[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;31m######################################################################[0m[0;34m[0m
+[0;34m[0m[0;31m## 5. DocTest Runner[0m[0;34m[0m
+[0;34m[0m[0;31m######################################################################[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mclass[0m [0mDocTestRunner[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;34m"""[0m
+[0;34m    A class used to run DocTest test cases, and accumulate statistics.[0m
+[0;34m    The `run` method is used to process a single DocTest case.  It[0m
+[0;34m    returns a tuple `(f, t)`, where `t` is the number of test cases[0m
+[0;34m    tried, and `f` is the number of test cases that failed.[0m
+[0;34m[0m
+[0;34m        >>> tests = DocTestFinder().find(_TestClass)[0m
+[0;34m        >>> runner = DocTestRunner(verbose=False)[0m
+[0;34m        >>> tests.sort(key = lambda test: test.name)[0m
+[0;34m        >>> for test in tests:[0m
+[0;34m        ...     print test.name, '->', runner.run(test)[0m
+[0;34m        _TestClass -> TestResults(failed=0, attempted=2)[0m
+[0;34m        _TestClass.__init__ -> TestResults(failed=0, attempted=2)[0m
+[0;34m        _TestClass.get -> TestResults(failed=0, attempted=2)[0m
+[0;34m        _TestClass.square -> TestResults(failed=0, attempted=1)[0m
+[0;34m[0m
+[0;34m    The `summarize` method prints a summary of all the test cases that[0m
+[0;34m    have been run by the runner, and returns an aggregated `(f, t)`[0m
+[0;34m    tuple:[0m
+[0;34m[0m
+[0;34m        >>> runner.summarize(verbose=1)[0m
+[0;34m        4 items passed all tests:[0m
+[0;34m           2 tests in _TestClass[0m
+[0;34m           2 tests in _TestClass.__init__[0m
+[0;34m           2 tests in _TestClass.get[0m
+[0;34m           1 tests in _TestClass.square[0m
+[0;34m        7 tests in 4 items.[0m
+[0;34m        7 passed and 0 failed.[0m
+[0;34m        Test passed.[0m
+[0;34m        TestResults(failed=0, attempted=7)[0m
+[0;34m[0m
+[0;34m    The aggregated number of tried examples and failed examples is[0m
+[0;34m    also available via the `tries` and `failures` attributes:[0m
+[0;34m[0m
+[0;34m        >>> runner.tries[0m
+[0;34m        7[0m
+[0;34m        >>> runner.failures[0m
+[0;34m        0[0m
+[0;34m[0m
+[0;34m    The comparison between expected outputs and actual outputs is done[0m
+[0;34m    by an `OutputChecker`.  This comparison may be customized with a[0m
+[0;34m    number of option flags; see the documentation for `testmod` for[0m
+[0;34m    more information.  If the option flags are insufficient, then the[0m
+[0;34m    comparison may also be customized by passing a subclass of[0m
+[0;34m    `OutputChecker` to the constructor.[0m
+[0;34m[0m
+[0;34m    The test runner's display output can be controlled in two ways.[0m
+[0;34m    First, an output function (`out) can be passed to[0m
+[0;34m    `TestRunner.run`; this function will be called with strings that[0m
+[0;34m    should be displayed.  It defaults to `sys.stdout.write`.  If[0m
+[0;34m    capturing the output is not sufficient, then the display output[0m
+[0;34m    can be also customized by subclassing DocTestRunner, and[0m
+[0;34m    overriding the methods `report_start`, `report_success`,[0m
+[0;34m    `report_unexpected_exception`, and `report_failure`.[0m
+[0;34m    """[0m[0;34m[0m
+[0;34m[0m    [0;31m# This divider string is used to separate failure messages, and to[0m[0;34m[0m
+[0;34m[0m    [0;31m# separate sections of the summary.[0m[0;34m[0m
+[0;34m[0m    [0mDIVIDER[0m [0;34m=[0m [0;34m"*"[0m [0;34m*[0m [0;36m70[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__init__[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mchecker[0m[0;34m=[0m[0mNone[0m[0;34m,[0m [0mverbose[0m[0;34m=[0m[0mNone[0m[0;34m,[0m [0moptionflags[0m[0;34m=[0m[0;36m0[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Create a new test runner.[0m
+[0;34m[0m
+[0;34m        Optional keyword arg `checker` is the `OutputChecker` that[0m
+[0;34m        should be used to compare the expected outputs and actual[0m
+[0;34m        outputs of doctest examples.[0m
+[0;34m[0m
+[0;34m        Optional keyword arg 'verbose' prints lots of stuff if true,[0m
+[0;34m        only failures if false; by default, it's true iff '-v' is in[0m
+[0;34m        sys.argv.[0m
+[0;34m[0m
+[0;34m        Optional argument `optionflags` can be used to control how the[0m
+[0;34m        test runner compares expected output to actual output, and how[0m
+[0;34m        it displays failures.  See the documentation for `testmod` for[0m
+[0;34m        more information.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0m_checker[0m [0;34m=[0m [0mchecker[0m [0;32mor[0m [0mOutputChecker[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mverbose[0m [0;32mis[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mverbose[0m [0;34m=[0m [0;34m'-v'[0m [0;32min[0m [0msys[0m[0;34m.[0m[0margv[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0m_verbose[0m [0;34m=[0m [0mverbose[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0moptionflags[0m [0;34m=[0m [0moptionflags[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0moriginal_optionflags[0m [0;34m=[0m [0moptionflags[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Keep track of the examples we've run.[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mtries[0m [0;34m=[0m [0;36m0[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mfailures[0m [0;34m=[0m [0;36m0[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0m_name2ft[0m [0;34m=[0m [0;34m{[0m[0;34m}[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Create a fake output target for capturing doctest output.[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0m_fakeout[0m [0;34m=[0m [0m_SpoofOut[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;31m#/////////////////////////////////////////////////////////////////[0m[0;34m[0m
+[0;34m[0m    [0;31m# Reporting methods[0m[0;34m[0m
+[0;34m[0m    [0;31m#/////////////////////////////////////////////////////////////////[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0mreport_start[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mout[0m[0;34m,[0m [0mtest[0m[0;34m,[0m [0mexample[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Report that the test runner is about to process the given[0m
+[0;34m        example.  (Only displays a message if verbose=True)[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mself[0m[0;34m.[0m[0m_verbose[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mexample[0m[0;34m.[0m[0mwant[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mout[0m[0;34m([0m[0;34m'Trying:\n'[0m [0;34m+[0m [0m_indent[0m[0;34m([0m[0mexample[0m[0;34m.[0m[0msource[0m[0;34m)[0m [0;34m+[0m[0;34m[0m
+[0;34m[0m                    [0;34m'Expecting:\n'[0m [0;34m+[0m [0m_indent[0m[0;34m([0m[0mexample[0m[0;34m.[0m[0mwant[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mout[0m[0;34m([0m[0;34m'Trying:\n'[0m [0;34m+[0m [0m_indent[0m[0;34m([0m[0mexample[0m[0;34m.[0m[0msource[0m[0;34m)[0m [0;34m+[0m[0;34m[0m
+[0;34m[0m                    [0;34m'Expecting nothing\n'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0mreport_success[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mout[0m[0;34m,[0m [0mtest[0m[0;34m,[0m [0mexample[0m[0;34m,[0m [0mgot[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Report that the given example ran successfully.  (Only[0m
+[0;34m        displays a message if verbose=True)[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mself[0m[0;34m.[0m[0m_verbose[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mout[0m[0;34m([0m[0;34m"ok\n"[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0mreport_failure[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mout[0m[0;34m,[0m [0mtest[0m[0;34m,[0m [0mexample[0m[0;34m,[0m [0mgot[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Report that the given example failed.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0mout[0m[0;34m([0m[0mself[0m[0;34m.[0m[0m_failure_header[0m[0;34m([0m[0mtest[0m[0;34m,[0m [0mexample[0m[0;34m)[0m [0;34m+[0m[0;34m[0m
+[0;34m[0m            [0mself[0m[0;34m.[0m[0m_checker[0m[0;34m.[0m[0moutput_difference[0m[0;34m([0m[0mexample[0m[0;34m,[0m [0mgot[0m[0;34m,[0m [0mself[0m[0;34m.[0m[0moptionflags[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0mreport_unexpected_exception[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mout[0m[0;34m,[0m [0mtest[0m[0;34m,[0m [0mexample[0m[0;34m,[0m [0mexc_info[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Report that the given example raised an unexpected exception.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0mout[0m[0;34m([0m[0mself[0m[0;34m.[0m[0m_failure_header[0m[0;34m([0m[0mtest[0m[0;34m,[0m [0mexample[0m[0;34m)[0m [0;34m+[0m[0;34m[0m
+[0;34m[0m            [0;34m'Exception raised:\n'[0m [0;34m+[0m [0m_indent[0m[0;34m([0m[0m_exception_traceback[0m[0;34m([0m[0mexc_info[0m[0;34m)[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m_failure_header[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mtest[0m[0;34m,[0m [0mexample[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0mout[0m [0;34m=[0m [0;34m[[0m[0mself[0m[0;34m.[0m[0mDIVIDER[0m[0;34m][0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mtest[0m[0;34m.[0m[0mfilename[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mtest[0m[0;34m.[0m[0mlineno[0m [0;32mis[0m [0;32mnot[0m [0mNone[0m [0;32mand[0m [0mexample[0m[0;34m.[0m[0mlineno[0m [0;32mis[0m [0;32mnot[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mlineno[0m [0;34m=[0m [0mtest[0m[0;34m.[0m[0mlineno[0m [0;34m+[0m [0mexample[0m[0;34m.[0m[0mlineno[0m [0;34m+[0m [0;36m1[0m[0;34m[0m
+[0;34m[0m            [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mlineno[0m [0;34m=[0m [0;34m'?'[0m[0;34m[0m
+[0;34m[0m            [0mout[0m[0;34m.[0m[0mappend[0m[0;34m([0m[0;34m'File "%s", line %s, in %s'[0m [0;34m%[0m[0;34m[0m
+[0;34m[0m                       [0;34m([0m[0mtest[0m[0;34m.[0m[0mfilename[0m[0;34m,[0m [0mlineno[0m[0;34m,[0m [0mtest[0m[0;34m.[0m[0mname[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mout[0m[0;34m.[0m[0mappend[0m[0;34m([0m[0;34m'Line %s, in %s'[0m [0;34m%[0m [0;34m([0m[0mexample[0m[0;34m.[0m[0mlineno[0m[0;34m+[0m[0;36m1[0m[0;34m,[0m [0mtest[0m[0;34m.[0m[0mname[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0mout[0m[0;34m.[0m[0mappend[0m[0;34m([0m[0;34m'Failed example:'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0msource[0m [0;34m=[0m [0mexample[0m[0;34m.[0m[0msource[0m[0;34m[0m
+[0;34m[0m        [0mout[0m[0;34m.[0m[0mappend[0m[0;34m([0m[0m_indent[0m[0;34m([0m[0msource[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0;34m'\n'[0m[0;34m.[0m[0mjoin[0m[0;34m([0m[0mout[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;31m#/////////////////////////////////////////////////////////////////[0m[0;34m[0m
+[0;34m[0m    [0;31m# DocTest Running[0m[0;34m[0m
+[0;34m[0m    [0;31m#/////////////////////////////////////////////////////////////////[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__run[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mtest[0m[0;34m,[0m [0mcompileflags[0m[0;34m,[0m [0mout[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Run the examples in `test`.  Write the outcome of each example[0m
+[0;34m        with one of the `DocTestRunner.report_*` methods, using the[0m
+[0;34m        writer function `out`.  `compileflags` is the set of compiler[0m
+[0;34m        flags that should be used to execute examples.  Return a tuple[0m
+[0;34m        `(f, t)`, where `t` is the number of examples tried, and `f`[0m
+[0;34m        is the number of examples that failed.  The examples are run[0m
+[0;34m        in the namespace `test.globs`.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0;31m# Keep track of the number of failures and tries.[0m[0;34m[0m
+[0;34m[0m        [0mfailures[0m [0;34m=[0m [0mtries[0m [0;34m=[0m [0;36m0[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Save the option flags (since option directives can be used[0m[0;34m[0m
+[0;34m[0m        [0;31m# to modify them).[0m[0;34m[0m
+[0;34m[0m        [0moriginal_optionflags[0m [0;34m=[0m [0mself[0m[0;34m.[0m[0moptionflags[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0mSUCCESS[0m[0;34m,[0m [0mFAILURE[0m[0;34m,[0m [0mBOOM[0m [0;34m=[0m [0mrange[0m[0;34m([0m[0;36m3[0m[0;34m)[0m [0;31m# `outcome` state[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0mcheck[0m [0;34m=[0m [0mself[0m[0;34m.[0m[0m_checker[0m[0;34m.[0m[0mcheck_output[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Process each example.[0m[0;34m[0m
+[0;34m[0m        [0;32mfor[0m [0mexamplenum[0m[0;34m,[0m [0mexample[0m [0;32min[0m [0menumerate[0m[0;34m([0m[0mtest[0m[0;34m.[0m[0mexamples[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m            [0;31m# If REPORT_ONLY_FIRST_FAILURE is set, then suppress[0m[0;34m[0m
+[0;34m[0m            [0;31m# reporting after the first failure.[0m[0;34m[0m
+[0;34m[0m            [0mquiet[0m [0;34m=[0m [0;34m([0m[0mself[0m[0;34m.[0m[0moptionflags[0m [0;34m&[0m [0mREPORT_ONLY_FIRST_FAILURE[0m [0;32mand[0m[0;34m[0m
+[0;34m[0m                     [0mfailures[0m [0;34m>[0m [0;36m0[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m            [0;31m# Merge in the example's options.[0m[0;34m[0m
+[0;34m[0m            [0mself[0m[0;34m.[0m[0moptionflags[0m [0;34m=[0m [0moriginal_optionflags[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mexample[0m[0;34m.[0m[0moptions[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mfor[0m [0;34m([0m[0moptionflag[0m[0;34m,[0m [0mval[0m[0;34m)[0m [0;32min[0m [0mexample[0m[0;34m.[0m[0moptions[0m[0;34m.[0m[0mitems[0m[0;34m([0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0;32mif[0m [0mval[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                        [0mself[0m[0;34m.[0m[0moptionflags[0m [0;34m|=[0m [0moptionflag[0m[0;34m[0m
+[0;34m[0m                    [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                        [0mself[0m[0;34m.[0m[0moptionflags[0m [0;34m&=[0m [0;34m~[0m[0moptionflag[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m            [0;31m# If 'SKIP' is set, then skip this example.[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mself[0m[0;34m.[0m[0moptionflags[0m [0;34m&[0m [0mSKIP[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mcontinue[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m            [0;31m# Record that we started this example.[0m[0;34m[0m
+[0;34m[0m            [0mtries[0m [0;34m+=[0m [0;36m1[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0;32mnot[0m [0mquiet[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mself[0m[0;34m.[0m[0mreport_start[0m[0;34m([0m[0mout[0m[0;34m,[0m [0mtest[0m[0;34m,[0m [0mexample[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m            [0;31m# Use a special filename for compile(), so we can retrieve[0m[0;34m[0m
+[0;34m[0m            [0;31m# the source code during interactive debugging (see[0m[0;34m[0m
+[0;34m[0m            [0;31m# __patched_linecache_getlines).[0m[0;34m[0m
+[0;34m[0m            [0mfilename[0m [0;34m=[0m [0;34m'<doctest %s[%d]>'[0m [0;34m%[0m [0;34m([0m[0mtest[0m[0;34m.[0m[0mname[0m[0;34m,[0m [0mexamplenum[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m            [0;31m# Run the example in the given context (globs), and record[0m[0;34m[0m
+[0;34m[0m            [0;31m# any exception that gets raised.  (But don't intercept[0m[0;34m[0m
+[0;34m[0m            [0;31m# keyboard interrupts.)[0m[0;34m[0m
+[0;34m[0m            [0;32mtry[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;31m# Don't blink!  This is where the user's code gets run.[0m[0;34m[0m
+[0;34m[0m                [0;32mexec[0m [0mcompile[0m[0;34m([0m[0mexample[0m[0;34m.[0m[0msource[0m[0;34m,[0m [0mfilename[0m[0;34m,[0m [0;34m"single"[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                             [0mcompileflags[0m[0;34m,[0m [0;36m1[0m[0;34m)[0m [0;32min[0m [0mtest[0m[0;34m.[0m[0mglobs[0m[0;34m[0m
+[0;34m[0m                [0mself[0m[0;34m.[0m[0mdebugger[0m[0;34m.[0m[0mset_continue[0m[0;34m([0m[0;34m)[0m [0;31m# ==== Example Finished ====[0m[0;34m[0m
+[0;34m[0m                [0mexception[0m [0;34m=[0m [0mNone[0m[0;34m[0m
+[0;34m[0m            [0;32mexcept[0m [0mKeyboardInterrupt[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mraise[0m[0;34m[0m
+[0;34m[0m            [0;32mexcept[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mexception[0m [0;34m=[0m [0msys[0m[0;34m.[0m[0mexc_info[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                [0mself[0m[0;34m.[0m[0mdebugger[0m[0;34m.[0m[0mset_continue[0m[0;34m([0m[0;34m)[0m [0;31m# ==== Example Finished ====[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m            [0mgot[0m [0;34m=[0m [0mself[0m[0;34m.[0m[0m_fakeout[0m[0;34m.[0m[0mgetvalue[0m[0;34m([0m[0;34m)[0m  [0;31m# the actual output[0m[0;34m[0m
+[0;34m[0m            [0mself[0m[0;34m.[0m[0m_fakeout[0m[0;34m.[0m[0mtruncate[0m[0;34m([0m[0;36m0[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0moutcome[0m [0;34m=[0m [0mFAILURE[0m   [0;31m# guilty until proved innocent or insane[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m            [0;31m# If the example executed without raising any exceptions,[0m[0;34m[0m
+[0;34m[0m            [0;31m# verify its output.[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mexception[0m [0;32mis[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mif[0m [0mcheck[0m[0;34m([0m[0mexample[0m[0;34m.[0m[0mwant[0m[0;34m,[0m [0mgot[0m[0;34m,[0m [0mself[0m[0;34m.[0m[0moptionflags[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0moutcome[0m [0;34m=[0m [0mSUCCESS[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m            [0;31m# The example raised an exception:  check if it was expected.[0m[0;34m[0m
+[0;34m[0m            [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mexc_info[0m [0;34m=[0m [0msys[0m[0;34m.[0m[0mexc_info[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                [0mexc_msg[0m [0;34m=[0m [0mtraceback[0m[0;34m.[0m[0mformat_exception_only[0m[0;34m([0m[0;34m*[0m[0mexc_info[0m[0;34m[[0m[0;34m:[0m[0;36m2[0m[0;34m][0m[0;34m)[0m[0;34m[[0m[0;34m-[0m[0;36m1[0m[0;34m][0m[0;34m[0m
+[0;34m[0m                [0;32mif[0m [0;32mnot[0m [0mquiet[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0mgot[0m [0;34m+=[0m [0m_exception_traceback[0m[0;34m([0m[0mexc_info[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m                [0;31m# If `example.exc_msg` is None, then we weren't expecting[0m[0;34m[0m
+[0;34m[0m                [0;31m# an exception.[0m[0;34m[0m
+[0;34m[0m                [0;32mif[0m [0mexample[0m[0;34m.[0m[0mexc_msg[0m [0;32mis[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0moutcome[0m [0;34m=[0m [0mBOOM[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m                [0;31m# We expected an exception:  see whether it matches.[0m[0;34m[0m
+[0;34m[0m                [0;32melif[0m [0mcheck[0m[0;34m([0m[0mexample[0m[0;34m.[0m[0mexc_msg[0m[0;34m,[0m [0mexc_msg[0m[0;34m,[0m [0mself[0m[0;34m.[0m[0moptionflags[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0moutcome[0m [0;34m=[0m [0mSUCCESS[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m                [0;31m# Another chance if they didn't care about the detail.[0m[0;34m[0m
+[0;34m[0m                [0;32melif[0m [0mself[0m[0;34m.[0m[0moptionflags[0m [0;34m&[0m [0mIGNORE_EXCEPTION_DETAIL[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0;32mif[0m [0mcheck[0m[0;34m([0m[0m_strip_exception_details[0m[0;34m([0m[0mexample[0m[0;34m.[0m[0mexc_msg[0m[0;34m)[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                             [0m_strip_exception_details[0m[0;34m([0m[0mexc_msg[0m[0;34m)[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                             [0mself[0m[0;34m.[0m[0moptionflags[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                        [0moutcome[0m [0;34m=[0m [0mSUCCESS[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m            [0;31m# Report the outcome.[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0moutcome[0m [0;32mis[0m [0mSUCCESS[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mif[0m [0;32mnot[0m [0mquiet[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0mself[0m[0;34m.[0m[0mreport_success[0m[0;34m([0m[0mout[0m[0;34m,[0m [0mtest[0m[0;34m,[0m [0mexample[0m[0;34m,[0m [0mgot[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32melif[0m [0moutcome[0m [0;32mis[0m [0mFAILURE[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mif[0m [0;32mnot[0m [0mquiet[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0mself[0m[0;34m.[0m[0mreport_failure[0m[0;34m([0m[0mout[0m[0;34m,[0m [0mtest[0m[0;34m,[0m [0mexample[0m[0;34m,[0m [0mgot[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                [0mfailures[0m [0;34m+=[0m [0;36m1[0m[0;34m[0m
+[0;34m[0m            [0;32melif[0m [0moutcome[0m [0;32mis[0m [0mBOOM[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mif[0m [0;32mnot[0m [0mquiet[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0mself[0m[0;34m.[0m[0mreport_unexpected_exception[0m[0;34m([0m[0mout[0m[0;34m,[0m [0mtest[0m[0;34m,[0m [0mexample[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                                                     [0mexc_info[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                [0mfailures[0m [0;34m+=[0m [0;36m1[0m[0;34m[0m
+[0;34m[0m            [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32massert[0m [0mFalse[0m[0;34m,[0m [0;34m([0m[0;34m"unknown outcome"[0m[0;34m,[0m [0moutcome[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Restore the option flags (in case they were modified)[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0moptionflags[0m [0;34m=[0m [0moriginal_optionflags[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Record and return the number of failures and tries.[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0m__record_outcome[0m[0;34m([0m[0mtest[0m[0;34m,[0m [0mfailures[0m[0;34m,[0m [0mtries[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mTestResults[0m[0;34m([0m[0mfailures[0m[0;34m,[0m [0mtries[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__record_outcome[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mtest[0m[0;34m,[0m [0mf[0m[0;34m,[0m [0mt[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Record the fact that the given DocTest (`test`) generated `f`[0m
+[0;34m        failures out of `t` tried examples.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0mf2[0m[0;34m,[0m [0mt2[0m [0;34m=[0m [0mself[0m[0;34m.[0m[0m_name2ft[0m[0;34m.[0m[0mget[0m[0;34m([0m[0mtest[0m[0;34m.[0m[0mname[0m[0;34m,[0m [0;34m([0m[0;36m0[0m[0;34m,[0m[0;36m0[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0m_name2ft[0m[0;34m[[0m[0mtest[0m[0;34m.[0m[0mname[0m[0;34m][0m [0;34m=[0m [0;34m([0m[0mf[0m[0;34m+[0m[0mf2[0m[0;34m,[0m [0mt[0m[0;34m+[0m[0mt2[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mfailures[0m [0;34m+=[0m [0mf[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mtries[0m [0;34m+=[0m [0mt[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0m__LINECACHE_FILENAME_RE[0m [0;34m=[0m [0mre[0m[0;34m.[0m[0mcompile[0m[0;34m([0m[0;34mr'<doctest '[0m[0;34m[0m
+[0;34m[0m                                         [0;34mr'(?P<name>.+)'[0m[0;34m[0m
+[0;34m[0m                                         [0;34mr'\[(?P<examplenum>\d+)\]>$'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__patched_linecache_getlines[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mfilename[0m[0;34m,[0m [0mmodule_globals[0m[0;34m=[0m[0mNone[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0mm[0m [0;34m=[0m [0mself[0m[0;34m.[0m[0m__LINECACHE_FILENAME_RE[0m[0;34m.[0m[0mmatch[0m[0;34m([0m[0mfilename[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mm[0m [0;32mand[0m [0mm[0m[0;34m.[0m[0mgroup[0m[0;34m([0m[0;34m'name'[0m[0;34m)[0m [0;34m==[0m [0mself[0m[0;34m.[0m[0mtest[0m[0;34m.[0m[0mname[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mexample[0m [0;34m=[0m [0mself[0m[0;34m.[0m[0mtest[0m[0;34m.[0m[0mexamples[0m[0;34m[[0m[0mint[0m[0;34m([0m[0mm[0m[0;34m.[0m[0mgroup[0m[0;34m([0m[0;34m'examplenum'[0m[0;34m)[0m[0;34m)[0m[0;34m][0m[0;34m[0m
+[0;34m[0m            [0msource[0m [0;34m=[0m [0mexample[0m[0;34m.[0m[0msource[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0misinstance[0m[0;34m([0m[0msource[0m[0;34m,[0m [0municode[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0msource[0m [0;34m=[0m [0msource[0m[0;34m.[0m[0mencode[0m[0;34m([0m[0;34m'ascii'[0m[0;34m,[0m [0;34m'backslashreplace'[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0msource[0m[0;34m.[0m[0msplitlines[0m[0;34m([0m[0mTrue[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mself[0m[0;34m.[0m[0msave_linecache_getlines[0m[0;34m([0m[0mfilename[0m[0;34m,[0m [0mmodule_globals[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0mrun[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mtest[0m[0;34m,[0m [0mcompileflags[0m[0;34m=[0m[0mNone[0m[0;34m,[0m [0mout[0m[0;34m=[0m[0mNone[0m[0;34m,[0m [0mclear_globs[0m[0;34m=[0m[0mTrue[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Run the examples in `test`, and display the results using the[0m
+[0;34m        writer function `out`.[0m
+[0;34m[0m
+[0;34m        The examples are run in the namespace `test.globs`.  If[0m
+[0;34m        `clear_globs` is true (the default), then this namespace will[0m
+[0;34m        be cleared after the test runs, to help with garbage[0m
+[0;34m        collection.  If you would like to examine the namespace after[0m
+[0;34m        the test completes, then use `clear_globs=False`.[0m
+[0;34m[0m
+[0;34m        `compileflags` gives the set of flags that should be used by[0m
+[0;34m        the Python compiler when running the examples.  If not[0m
+[0;34m        specified, then it will default to the set of future-import[0m
+[0;34m        flags that apply to `globs`.[0m
+[0;34m[0m
+[0;34m        The output of each example is checked using[0m
+[0;34m        `DocTestRunner.check_output`, and the results are formatted by[0m
+[0;34m        the `DocTestRunner.report_*` methods.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mtest[0m [0;34m=[0m [0mtest[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mcompileflags[0m [0;32mis[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mcompileflags[0m [0;34m=[0m [0m_extract_future_flags[0m[0;34m([0m[0mtest[0m[0;34m.[0m[0mglobs[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0msave_stdout[0m [0;34m=[0m [0msys[0m[0;34m.[0m[0mstdout[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mout[0m [0;32mis[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mout[0m [0;34m=[0m [0msave_stdout[0m[0;34m.[0m[0mwrite[0m[0;34m[0m
+[0;34m[0m        [0msys[0m[0;34m.[0m[0mstdout[0m [0;34m=[0m [0mself[0m[0;34m.[0m[0m_fakeout[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Patch pdb.set_trace to restore sys.stdout during interactive[0m[0;34m[0m
+[0;34m[0m        [0;31m# debugging (so it's not still redirected to self._fakeout).[0m[0;34m[0m
+[0;34m[0m        [0;31m# Note that the interactive output will go to *our*[0m[0;34m[0m
+[0;34m[0m        [0;31m# save_stdout, even if that's not the real sys.stdout; this[0m[0;34m[0m
+[0;34m[0m        [0;31m# allows us to write test cases for the set_trace behavior.[0m[0;34m[0m
+[0;34m[0m        [0msave_set_trace[0m [0;34m=[0m [0mpdb[0m[0;34m.[0m[0mset_trace[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mdebugger[0m [0;34m=[0m [0m_OutputRedirectingPdb[0m[0;34m([0m[0msave_stdout[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mdebugger[0m[0;34m.[0m[0mreset[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0mpdb[0m[0;34m.[0m[0mset_trace[0m [0;34m=[0m [0mself[0m[0;34m.[0m[0mdebugger[0m[0;34m.[0m[0mset_trace[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Patch linecache.getlines, so we can see the example's source[0m[0;34m[0m
+[0;34m[0m        [0;31m# when we're inside the debugger.[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0msave_linecache_getlines[0m [0;34m=[0m [0mlinecache[0m[0;34m.[0m[0mgetlines[0m[0;34m[0m
+[0;34m[0m        [0mlinecache[0m[0;34m.[0m[0mgetlines[0m [0;34m=[0m [0mself[0m[0;34m.[0m[0m__patched_linecache_getlines[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Make sure sys.displayhook just prints the value to stdout[0m[0;34m[0m
+[0;34m[0m        [0msave_displayhook[0m [0;34m=[0m [0msys[0m[0;34m.[0m[0mdisplayhook[0m[0;34m[0m
+[0;34m[0m        [0msys[0m[0;34m.[0m[0mdisplayhook[0m [0;34m=[0m [0msys[0m[0;34m.[0m[0m__displayhook__[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;32mtry[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mself[0m[0;34m.[0m[0m__run[0m[0;34m([0m[0mtest[0m[0;34m,[0m [0mcompileflags[0m[0;34m,[0m [0mout[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mfinally[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0msys[0m[0;34m.[0m[0mstdout[0m [0;34m=[0m [0msave_stdout[0m[0;34m[0m
+[0;34m[0m            [0mpdb[0m[0;34m.[0m[0mset_trace[0m [0;34m=[0m [0msave_set_trace[0m[0;34m[0m
+[0;34m[0m            [0mlinecache[0m[0;34m.[0m[0mgetlines[0m [0;34m=[0m [0mself[0m[0;34m.[0m[0msave_linecache_getlines[0m[0;34m[0m
+[0;34m[0m            [0msys[0m[0;34m.[0m[0mdisplayhook[0m [0;34m=[0m [0msave_displayhook[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mclear_globs[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mtest[0m[0;34m.[0m[0mglobs[0m[0;34m.[0m[0mclear[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;31m#/////////////////////////////////////////////////////////////////[0m[0;34m[0m
+[0;34m[0m    [0;31m# Summarization[0m[0;34m[0m
+[0;34m[0m    [0;31m#/////////////////////////////////////////////////////////////////[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0msummarize[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mverbose[0m[0;34m=[0m[0mNone[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Print a summary of all the test cases that have been run by[0m
+[0;34m        this DocTestRunner, and return a tuple `(f, t)`, where `f` is[0m
+[0;34m        the total number of failed examples, and `t` is the total[0m
+[0;34m        number of tried examples.[0m
+[0;34m[0m
+[0;34m        The optional `verbose` argument controls how detailed the[0m
+[0;34m        summary is.  If the verbosity is not specified, then the[0m
+[0;34m        DocTestRunner's verbosity is used.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mverbose[0m [0;32mis[0m [0mNone[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mverbose[0m [0;34m=[0m [0mself[0m[0;34m.[0m[0m_verbose[0m[0;34m[0m
+[0;34m[0m        [0mnotests[0m [0;34m=[0m [0;34m[[0m[0;34m][0m[0;34m[0m
+[0;34m[0m        [0mpassed[0m [0;34m=[0m [0;34m[[0m[0;34m][0m[0;34m[0m
+[0;34m[0m        [0mfailed[0m [0;34m=[0m [0;34m[[0m[0;34m][0m[0;34m[0m
+[0;34m[0m        [0mtotalt[0m [0;34m=[0m [0mtotalf[0m [0;34m=[0m [0;36m0[0m[0;34m[0m
+[0;34m[0m        [0;32mfor[0m [0mx[0m [0;32min[0m [0mself[0m[0;34m.[0m[0m_name2ft[0m[0;34m.[0m[0mitems[0m[0;34m([0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mname[0m[0;34m,[0m [0;34m([0m[0mf[0m[0;34m,[0m [0mt[0m[0;34m)[0m [0;34m=[0m [0mx[0m[0;34m[0m
+[0;34m[0m            [0;32massert[0m [0mf[0m [0;34m<=[0m [0mt[0m[0;34m[0m
+[0;34m[0m            [0mtotalt[0m [0;34m+=[0m [0mt[0m[0;34m[0m
+[0;34m[0m            [0mtotalf[0m [0;34m+=[0m [0mf[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mt[0m [0;34m==[0m [0;36m0[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mnotests[0m[0;34m.[0m[0mappend[0m[0;34m([0m[0mname[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32melif[0m [0mf[0m [0;34m==[0m [0;36m0[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mpassed[0m[0;34m.[0m[0mappend[0m[0;34m([0m [0;34m([0m[0mname[0m[0;34m,[0m [0mt[0m[0;34m)[0m [0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mfailed[0m[0;34m.[0m[0mappend[0m[0;34m([0m[0mx[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mverbose[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mnotests[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mprint[0m [0mlen[0m[0;34m([0m[0mnotests[0m[0;34m)[0m[0;34m,[0m [0;34m"items had no tests:"[0m[0;34m[0m
+[0;34m[0m                [0mnotests[0m[0;34m.[0m[0msort[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                [0;32mfor[0m [0mthing[0m [0;32min[0m [0mnotests[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0;32mprint[0m [0;34m"   "[0m[0;34m,[0m [0mthing[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mpassed[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mprint[0m [0mlen[0m[0;34m([0m[0mpassed[0m[0;34m)[0m[0;34m,[0m [0;34m"items passed all tests:"[0m[0;34m[0m
+[0;34m[0m                [0mpassed[0m[0;34m.[0m[0msort[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                [0;32mfor[0m [0mthing[0m[0;34m,[0m [0mcount[0m [0;32min[0m [0mpassed[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                    [0;32mprint[0m [0;34m" %3d tests in %s"[0m [0;34m%[0m [0;34m([0m[0mcount[0m[0;34m,[0m [0mthing[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mfailed[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mprint[0m [0mself[0m[0;34m.[0m[0mDIVIDER[0m[0;34m[0m
+[0;34m[0m            [0;32mprint[0m [0mlen[0m[0;34m([0m[0mfailed[0m[0;34m)[0m[0;34m,[0m [0;34m"items had failures:"[0m[0;34m[0m
+[0;34m[0m            [0mfailed[0m[0;34m.[0m[0msort[0m[0;34m([0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32mfor[0m [0mthing[0m[0;34m,[0m [0;34m([0m[0mf[0m[0;34m,[0m [0mt[0m[0;34m)[0m [0;32min[0m [0mfailed[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mprint[0m [0;34m" %3d of %3d in %s"[0m [0;34m%[0m [0;34m([0m[0mf[0m[0;34m,[0m [0mt[0m[0;34m,[0m [0mthing[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mverbose[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mprint[0m [0mtotalt[0m[0;34m,[0m [0;34m"tests in"[0m[0;34m,[0m [0mlen[0m[0;34m([0m[0mself[0m[0;34m.[0m[0m_name2ft[0m[0;34m)[0m[0;34m,[0m [0;34m"items."[0m[0;34m[0m
+[0;34m[0m            [0;32mprint[0m [0mtotalt[0m [0;34m-[0m [0mtotalf[0m[0;34m,[0m [0;34m"passed and"[0m[0;34m,[0m [0mtotalf[0m[0;34m,[0m [0;34m"failed."[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mtotalf[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mprint[0m [0;34m"***Test Failed***"[0m[0;34m,[0m [0mtotalf[0m[0;34m,[0m [0;34m"failures."[0m[0;34m[0m
+[0;34m[0m        [0;32melif[0m [0mverbose[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mprint[0m [0;34m"Test passed."[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mTestResults[0m[0;34m([0m[0mtotalf[0m[0;34m,[0m [0mtotalt[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;31m#/////////////////////////////////////////////////////////////////[0m[0;34m[0m
+[0;34m[0m    [0;31m# Backward compatibility cruft to maintain doctest.master.[0m[0;34m[0m
+[0;34m[0m    [0;31m#/////////////////////////////////////////////////////////////////[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0mmerge[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mother[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0md[0m [0;34m=[0m [0mself[0m[0;34m.[0m[0m_name2ft[0m[0;34m[0m
+[0;34m[0m        [0;32mfor[0m [0mname[0m[0;34m,[0m [0;34m([0m[0mf[0m[0;34m,[0m [0mt[0m[0;34m)[0m [0;32min[0m [0mother[0m[0;34m.[0m[0m_name2ft[0m[0;34m.[0m[0mitems[0m[0;34m([0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mname[0m [0;32min[0m [0md[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;31m# Don't print here by default, since doing[0m[0;34m[0m
+[0;34m[0m                [0;31m#     so breaks some of the buildbots[0m[0;34m[0m
+[0;34m[0m                [0;31m#print "*** DocTestRunner.merge: '" + name + "' in both" \[0m[0;34m[0m
+[0;34m[0m                [0;31m#    " testers; summing outcomes."[0m[0;34m[0m
+[0;34m[0m                [0mf2[0m[0;34m,[0m [0mt2[0m [0;34m=[0m [0md[0m[0;34m[[0m[0mname[0m[0;34m][0m[0;34m[0m
+[0;34m[0m                [0mf[0m [0;34m=[0m [0mf[0m [0;34m+[0m [0mf2[0m[0;34m[0m
+[0;34m[0m                [0mt[0m [0;34m=[0m [0mt[0m [0;34m+[0m [0mt2[0m[0;34m[0m
+[0;34m[0m            [0md[0m[0;34m[[0m[0mname[0m[0;34m][0m [0;34m=[0m [0mf[0m[0;34m,[0m [0mt[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mclass[0m [0mOutputChecker[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;34m"""[0m
+[0;34m    A class used to check the whether the actual output from a doctest[0m
+[0;34m    example matches the expected output.  `OutputChecker` defines two[0m
+[0;34m    methods: `check_output`, which compares a given pair of outputs,[0m
+[0;34m    and returns true if they match; and `output_difference`, which[0m
+[0;34m    returns a string describing the differences between two outputs.[0m
+[0;34m    """[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0mcheck_output[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mwant[0m[0;34m,[0m [0mgot[0m[0;34m,[0m [0moptionflags[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Return True iff the actual output from an example (`got`)[0m
+[0;34m        matches the expected output (`want`).  These strings are[0m
+[0;34m        always considered to match if they are identical; but[0m
+[0;34m        depending on what option flags the test runner is using,[0m
+[0;34m        several non-exact match types are also possible.  See the[0m
+[0;34m        documentation for `TestRunner` for more information about[0m
+[0;34m        option flags.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0;31m# Handle the common case first, for efficiency:[0m[0;34m[0m
+[0;34m[0m        [0;31m# if they're string-identical, always return true.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mgot[0m [0;34m==[0m [0mwant[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mTrue[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# The values True and False replaced 1 and 0 as the return[0m[0;34m[0m
+[0;34m[0m        [0;31m# value for boolean comparisons in Python 2.3.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0;32mnot[0m [0;34m([0m[0moptionflags[0m [0;34m&[0m [0mDONT_ACCEPT_TRUE_FOR_1[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0;34m([0m[0mgot[0m[0;34m,[0m[0mwant[0m[0;34m)[0m [0;34m==[0m [0;34m([0m[0;34m"True\n"[0m[0;34m,[0m [0;34m"1\n"[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mreturn[0m [0mTrue[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0;34m([0m[0mgot[0m[0;34m,[0m[0mwant[0m[0;34m)[0m [0;34m==[0m [0;34m([0m[0;34m"False\n"[0m[0;34m,[0m [0;34m"0\n"[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mreturn[0m [0mTrue[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# <BLANKLINE> can be used as a special sequence to signify a[0m[0;34m[0m
+[0;34m[0m        [0;31m# blank line, unless the DONT_ACCEPT_BLANKLINE flag is used.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0;32mnot[0m [0;34m([0m[0moptionflags[0m [0;34m&[0m [0mDONT_ACCEPT_BLANKLINE[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;31m# Replace <BLANKLINE> in want with a blank line.[0m[0;34m[0m
+[0;34m[0m            [0mwant[0m [0;34m=[0m [0mre[0m[0;34m.[0m[0msub[0m[0;34m([0m[0;34m'(?m)^%s\s*?$'[0m [0;34m%[0m [0mre[0m[0;34m.[0m[0mescape[0m[0;34m([0m[0mBLANKLINE_MARKER[0m[0;34m)[0m[0;34m,[0m[0;34m[0m
+[0;34m[0m                          [0;34m''[0m[0;34m,[0m [0mwant[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;31m# If a line in got contains only spaces, then remove the[0m[0;34m[0m
+[0;34m[0m            [0;31m# spaces.[0m[0;34m[0m
+[0;34m[0m            [0mgot[0m [0;34m=[0m [0mre[0m[0;34m.[0m[0msub[0m[0;34m([0m[0;34m'(?m)^\s*?$'[0m[0;34m,[0m [0;34m''[0m[0;34m,[0m [0mgot[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mgot[0m [0;34m==[0m [0mwant[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mreturn[0m [0mTrue[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# This flag causes doctest to ignore any differences in the[0m[0;34m[0m
+[0;34m[0m        [0;31m# contents of whitespace strings.  Note that this can be used[0m[0;34m[0m
+[0;34m[0m        [0;31m# in conjunction with the ELLIPSIS flag.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0moptionflags[0m [0;34m&[0m [0mNORMALIZE_WHITESPACE[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mgot[0m [0;34m=[0m [0;34m' '[0m[0;34m.[0m[0mjoin[0m[0;34m([0m[0mgot[0m[0;34m.[0m[0msplit[0m[0;34m([0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0mwant[0m [0;34m=[0m [0;34m' '[0m[0;34m.[0m[0mjoin[0m[0;34m([0m[0mwant[0m[0;34m.[0m[0msplit[0m[0;34m([0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0mgot[0m [0;34m==[0m [0mwant[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mreturn[0m [0mTrue[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# The ELLIPSIS flag says to let the sequence "..." in `want`[0m[0;34m[0m
+[0;34m[0m        [0;31m# match any substring in `got`.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0moptionflags[0m [0;34m&[0m [0mELLIPSIS[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0m_ellipsis_match[0m[0;34m([0m[0mwant[0m[0;34m,[0m [0mgot[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32mreturn[0m [0mTrue[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# We didn't find any match; return false.[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mFalse[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;31m# Should we do a fancy diff?[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m_do_a_fancy_diff[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mwant[0m[0;34m,[0m [0mgot[0m[0;34m,[0m [0moptionflags[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;31m# Not unless they asked for a fancy diff.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0;32mnot[0m [0moptionflags[0m [0;34m&[0m [0;34m([0m[0mREPORT_UDIFF[0m [0;34m|[0m[0;34m[0m
+[0;34m[0m                              [0mREPORT_CDIFF[0m [0;34m|[0m[0;34m[0m
+[0;34m[0m                              [0mREPORT_NDIFF[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mFalse[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# If expected output uses ellipsis, a meaningful fancy diff is[0m[0;34m[0m
+[0;34m[0m        [0;31m# too hard ... or maybe not.  In two real-life failures Tim saw,[0m[0;34m[0m
+[0;34m[0m        [0;31m# a diff was a major help anyway, so this is commented out.[0m[0;34m[0m
+[0;34m[0m        [0;31m# [todo] _ellipsis_match() knows which pieces do and don't match,[0m[0;34m[0m
+[0;34m[0m        [0;31m# and could be the basis for a kick-ass diff in this case.[0m[0;34m[0m
+[0;34m[0m        [0;31m##if optionflags & ELLIPSIS and ELLIPSIS_MARKER in want:[0m[0;34m[0m
+[0;34m[0m        [0;31m##    return False[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# ndiff does intraline difference marking, so can be useful even[0m[0;34m[0m
+[0;34m[0m        [0;31m# for 1-line differences.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0moptionflags[0m [0;34m&[0m [0mREPORT_NDIFF[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0mTrue[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# The other diff types need at least a few lines to be helpful.[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mwant[0m[0;34m.[0m[0mcount[0m[0;34m([0m[0;34m'\n'[0m[0;34m)[0m [0;34m>[0m [0;36m2[0m [0;32mand[0m [0mgot[0m[0;34m.[0m[0mcount[0m[0;34m([0m[0;34m'\n'[0m[0;34m)[0m [0;34m>[0m [0;36m2[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0moutput_difference[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mexample[0m[0;34m,[0m [0mgot[0m[0;34m,[0m [0moptionflags[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;34m"""[0m
+[0;34m        Return a string describing the differences between the[0m
+[0;34m        expected output for a given example (`example`) and the actual[0m
+[0;34m        output (`got`).  `optionflags` is the set of option flags used[0m
+[0;34m        to compare `want` and `got`.[0m
+[0;34m        """[0m[0;34m[0m
+[0;34m[0m        [0mwant[0m [0;34m=[0m [0mexample[0m[0;34m.[0m[0mwant[0m[0;34m[0m
+[0;34m[0m        [0;31m# If <BLANKLINE>s are being used, then replace blank lines[0m[0;34m[0m
+[0;34m[0m        [0;31m# with <BLANKLINE> in the actual output string.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0;32mnot[0m [0;34m([0m[0moptionflags[0m [0;34m&[0m [0mDONT_ACCEPT_BLANKLINE[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0mgot[0m [0;34m=[0m [0mre[0m[0;34m.[0m[0msub[0m[0;34m([0m[0;34m'(?m)^[ ]*(?=\n)'[0m[0;34m,[0m [0mBLANKLINE_MARKER[0m[0;34m,[0m [0mgot[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# Check if we should use diff.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mself[0m[0;34m.[0m[0m_do_a_fancy_diff[0m[0;34m([0m[0mwant[0m[0;34m,[0m [0mgot[0m[0;34m,[0m [0moptionflags[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;31m# Split want & got into lines.[0m[0;34m[0m
+[0;34m[0m            [0mwant_lines[0m [0;34m=[0m [0mwant[0m[0;34m.[0m[0msplitlines[0m[0;34m([0m[0mTrue[0m[0;34m)[0m  [0;31m# True == keep line ends[0m[0;34m[0m
+[0;34m[0m            [0mgot_lines[0m [0;34m=[0m [0mgot[0m[0;34m.[0m[0msplitlines[0m[0;34m([0m[0mTrue[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m            [0;31m# Use difflib to find their differences.[0m[0;34m[0m
+[0;34m[0m            [0;32mif[0m [0moptionflags[0m [0;34m&[0m [0mREPORT_UDIFF[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mdiff[0m [0;34m=[0m [0mdifflib[0m[0;34m.[0m[0munified_diff[0m[0;34m([0m[0mwant_lines[0m[0;34m,[0m [0mgot_lines[0m[0;34m,[0m [0mn[0m[0;34m=[0m[0;36m2[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                [0mdiff[0m [0;34m=[0m [0mlist[0m[0;34m([0m[0mdiff[0m[0;34m)[0m[0;34m[[0m[0;36m2[0m[0;34m:[0m[0;34m][0m [0;31m# strip the diff header[0m[0;34m[0m
+[0;34m[0m                [0mkind[0m [0;34m=[0m [0;34m'unified diff with -expected +actual'[0m[0;34m[0m
+[0;34m[0m            [0;32melif[0m [0moptionflags[0m [0;34m&[0m [0mREPORT_CDIFF[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mdiff[0m [0;34m=[0m [0mdifflib[0m[0;34m.[0m[0mcontext_diff[0m[0;34m([0m[0mwant_lines[0m[0;34m,[0m [0mgot_lines[0m[0;34m,[0m [0mn[0m[0;34m=[0m[0;36m2[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                [0mdiff[0m [0;34m=[0m [0mlist[0m[0;34m([0m[0mdiff[0m[0;34m)[0m[0;34m[[0m[0;36m2[0m[0;34m:[0m[0;34m][0m [0;31m# strip the diff header[0m[0;34m[0m
+[0;34m[0m                [0mkind[0m [0;34m=[0m [0;34m'context diff with expected followed by actual'[0m[0;34m[0m
+[0;34m[0m            [0;32melif[0m [0moptionflags[0m [0;34m&[0m [0mREPORT_NDIFF[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0mengine[0m [0;34m=[0m [0mdifflib[0m[0;34m.[0m[0mDiffer[0m[0;34m([0m[0mcharjunk[0m[0;34m=[0m[0mdifflib[0m[0;34m.[0m[0mIS_CHARACTER_JUNK[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                [0mdiff[0m [0;34m=[0m [0mlist[0m[0;34m([0m[0mengine[0m[0;34m.[0m[0mcompare[0m[0;34m([0m[0mwant_lines[0m[0;34m,[0m [0mgot_lines[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m                [0mkind[0m [0;34m=[0m [0;34m'ndiff with -expected +actual'[0m[0;34m[0m
+[0;34m[0m            [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m                [0;32massert[0m [0;36m0[0m[0;34m,[0m [0;34m'Bad diff option'[0m[0;34m[0m
+[0;34m[0m            [0;31m# Remove trailing whitespace on diff output.[0m[0;34m[0m
+[0;34m[0m            [0mdiff[0m [0;34m=[0m [0;34m[[0m[0mline[0m[0;34m.[0m[0mrstrip[0m[0;34m([0m[0;34m)[0m [0;34m+[0m [0;34m'\n'[0m [0;32mfor[0m [0mline[0m [0;32min[0m [0mdiff[0m[0;34m][0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0;34m'Differences (%s):\n'[0m [0;34m%[0m [0mkind[0m [0;34m+[0m [0m_indent[0m[0;34m([0m[0;34m''[0m[0;34m.[0m[0mjoin[0m[0;34m([0m[0mdiff[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m        [0;31m# If we're not using diff, then simply list the expected[0m[0;34m[0m
+[0;34m[0m        [0;31m# output followed by the actual output.[0m[0;34m[0m
+[0;34m[0m        [0;32mif[0m [0mwant[0m [0;32mand[0m [0mgot[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0;34m'Expected:\n%sGot:\n%s'[0m [0;34m%[0m [0;34m([0m[0m_indent[0m[0;34m([0m[0mwant[0m[0;34m)[0m[0;34m,[0m [0m_indent[0m[0;34m([0m[0mgot[0m[0;34m)[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32melif[0m [0mwant[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0;34m'Expected:\n%sGot nothing\n'[0m [0;34m%[0m [0m_indent[0m[0;34m([0m[0mwant[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32melif[0m [0mgot[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0;34m'Expected nothing\nGot:\n%s'[0m [0;34m%[0m [0m_indent[0m[0;34m([0m[0mgot[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m        [0;32melse[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m            [0;32mreturn[0m [0;34m'Expected nothing\nGot nothing\n'[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mclass[0m [0mDocTestFailure[0m[0;34m([0m[0mException[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;34m"""A DocTest example has failed in debugging mode.[0m
+[0;34m[0m
+[0;34m    The exception instance has variables:[0m
+[0;34m[0m
+[0;34m    - test: the DocTest object being run[0m
+[0;34m[0m
+[0;34m    - example: the Example object that failed[0m
+[0;34m[0m
+[0;34m    - got: the actual output[0m
+[0;34m    """[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__init__[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mtest[0m[0;34m,[0m [0mexample[0m[0;34m,[0m [0mgot[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mtest[0m [0;34m=[0m [0mtest[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mexample[0m [0;34m=[0m [0mexample[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mgot[0m [0;34m=[0m [0mgot[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__str__[0m[0;34m([0m[0mself[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mstr[0m[0;34m([0m[0mself[0m[0;34m.[0m[0mtest[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mclass[0m [0mUnexpectedException[0m[0;34m([0m[0mException[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;34m"""A DocTest example has encountered an unexpected exception[0m
+[0;34m[0m
+[0;34m    The exception instance has variables:[0m
+[0;34m[0m
+[0;34m    - test: the DocTest object being run[0m
+[0;34m[0m
+[0;34m    - example: the Example object that failed[0m
+[0;34m[0m
+[0;34m    - exc_info: the exception info[0m
+[0;34m    """[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__init__[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mtest[0m[0;34m,[0m [0mexample[0m[0;34m,[0m [0mexc_info[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mtest[0m [0;34m=[0m [0mtest[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mexample[0m [0;34m=[0m [0mexample[0m[0;34m[0m
+[0;34m[0m        [0mself[0m[0;34m.[0m[0mexc_info[0m [0;34m=[0m [0mexc_info[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m    [0;32mdef[0m [0m__str__[0m[0;34m([0m[0mself[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m        [0;32mreturn[0m [0mstr[0m[0;34m([0m[0mself[0m[0;34m.[0m[0mtest[0m[0;34m)[0m[0;34m[0m
+[0;34m[0m[0;34m[0m
+[0;34m[0m[0;32mclass[0m [0mDebugRunner[0m[0;34m([0m[0mDocTestRunner[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
+[0;34m[0m    [0;34mr"""Run doc tests but raise an exception as soon as there is a failure.[0m
+[0;34m[0m
+[0;34m       If an unexpected exception occurs, an UnexpectedException is raised.[0m
+[0;34m       It contains the test, the example, and the original exception:[0m
+[0;34m[0m
+[0;34m         >>> runner = DebugRunner(verbose=False)[0m
+[0;34m         >>> test = DocTestParser().get_doctest('>>> raise KeyError\n42',[0m
+[0;34m         ...                                    {}, 'foo', 'foo.py', 0)[0m
+[0;34m         >>> try:[0m
+[0;34m         ...     runner.run(test)[0m
+[0;34m         ... except UnexpectedException, failure:[0m
+[0;34m         ...     pass[0m
+[0;34m[0m
+[0;34m         >>> failure.test is test[0m
+[0;34m         True[0m
+[0;34m[0m
+[0;34m         >>> failure.example.want[0m
+[0;34m         '42\n'[0m
+[0;34m[0m
+[0;34m         >>> exc_info = failure.exc_info[0m
+[0;34m         >>> raise exc_info[0], exc_info[1], exc_info[2][0m
+[0;34m         Traceback (most recent call last):[0m
+[0;34m         ...[0m
+[0;34m         KeyError[0m
+[0;34m[0m
+[0;34m       We wrap the original exception to give the calling application[0m
+[0;34m       access to the test and example information.[0m
+[0;34m[0m
+[0;34m       If the output doesn't match, then a DocTestFailure is raised:[0m
+[0;34m[0m
+[0;34m         >>> test = DocTestParser().get_doctest('''[0m
+[0;34m         ...      >>> x = 1[0m
+[0;34m         ...      >>> x[0m
+[0;34m         ...      2[0m
+[0;34m         ...      ''', {}, 'foo', 'foo.py', 0)[0m
+[0;34m[0m
+[0;34m         >>> try:[0m
+[0;34m         ...    runner.run(test)[0m
+[0;34m         ... except DocTestFailure, failure:[0m
+[0;34m         ...    pass[0m
+[0;34m[0m
+[0;34m       DocTestFailure objects provide access to the test:[0m
+[0;34m[0m
+[0;34m         >>> failure.test is test[0m
+[0;34m         True[0m
+[0;34m[0m
+[0;34m       As well as to the example:[0m
+[0;34m[0m
+[0;34m         >>> failure.example.want[0m
+[0;34m         '2\n'[0m
+[0;34m[0m
+[0;34m       and the actual output:[0m
+[0;34m[0m
+[0;34m         >>> failure.got[0m
+[0;34m         '1\n'[0m
+[0;34m[0m
+[0;34m       If a failure or error occurs, the globals are left intact:[0m
+[0;34m[0m
+[0;34m         >>> del test.globs['__builtins__'][0m
+[0;34m         >>> test.globs[0m
+[0;34m         {'x': 1}[0m
+[0;34m[0m
+[0;34m         >>> test = DocTestParser().get_doctest('''[0m
+[0;34m         ...      >>> x = 2[0m
+[0;34m         ...      >>> raise KeyError[0m
+[0;34m         ...      ''', {}, 'foo', 'foo.py', 0)[0m
+[0;34m[0m
+[0;34m         >>> runner.run(test)[0m
+[0;34m         Traceback (most recent call last):[0m
+[0;34m         ...[0m
+[0;34m         UnexpectedException: <DocTest foo from foo.py:0 (2 examples)>[0m
+[0;34m[0m
+[0;34m         >>> del test.globs['__builtins__'][0m
+[0;34m         >>> test.globs[0m
+[0;34m         {'x': 2}[0m
+[0;34m[0m
+[0;34m       But the globals are cleared if there is no error:[0m
+[0;34m[0m
+[0;34m         >>> test = DocTestParser().get_doctest('''[0m
+[0;34m         ...      >>> x = 2[0m
+[0;34m         ...      ''', {}, 'foo', 'foo.py', 0)[0m
+[0;34m[0m
+[0;34m         >>> runner.run(test)[0m
+[0;34m         TestResults(failed=0, attempted=1)[0m
+[0;34m[0m
+[0;34m         >>> test.globs[0m
+[0;34m         {}[0m
+[0;34m[0m
+[0;34m       """[0m[0;34m[0m
+[0;34

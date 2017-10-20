@@ -1,0 +1,1 @@
+from control_flow import find_all_primes #import function from module
